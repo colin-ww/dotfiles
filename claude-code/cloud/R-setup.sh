@@ -2,6 +2,9 @@
 
 # see: https://claude.ai/chat/1540efcf-491e-4344-b536-f47f11156400
 
+# time takes to run:
+#   2026.10.16: 0m47 - first draft
+
 # ============================================================================
 # Claude Code cloud env: R + tidyverse-style stack
 #
