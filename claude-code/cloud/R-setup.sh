@@ -107,20 +107,23 @@ Rscript -e 'install.packages("tidyverse")' || { echo "FAIL: tidyverse"; exit 1; 
 # ----------------------------------------------------------------------------
 # STEP 4b: Extra R packages  (~0.5-1 min). EDIT FREELY.
 # Soft fail: a failure is logged but the session still starts.
-# Biggest downloads: arrow, duckdb. Drop them if runtime creeps toward 5 min.
+# Biggest downloads: devtools (many deps), duckdb. Drop if runtime creeps toward 5 min.
+# See README.md for why each package is (not) here.
 # NOT useful here: odbc/ROracle. The cloud VM can't reach StatCan DBs anyway.
 # ----------------------------------------------------------------------------
 Rscript -e '
 pkgs <- c(
-  "janitor",     # clean_names, tabyl
-  "testthat",    # unit tests
-  "styler",      # auto-format code
+  "devtools",    # + usethis, roxygen2, pkgload, testthat, remotes, waldo
+  "testthat",    # unit tests (explicit; also via devtools)
   "lintr",       # lint / style checks
-  "arrow",       # parquet
-  "duckdb",      # fast local SQL on files
-  "data.table",  # fast fread/fwrite
-  "targets",     # pipelines
-  "here"         # project-relative paths
+  "styler",      # auto-format code
+  "here",        # project-relative paths
+  "janitor",     # clean_names, tabyl
+  "skimr",       # quick data summaries
+  "tictoc",      # tiny timer
+  "httr2",       # web API calls
+  "writexl",     # write xlsx (readxl is in tidyverse)
+  "duckdb"       # fast local SQL on csv/parquet files
 )
 install.packages(pkgs)
 missing <- setdiff(pkgs, rownames(installed.packages()))
