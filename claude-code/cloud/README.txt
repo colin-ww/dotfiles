@@ -12,23 +12,31 @@ lookup cranwatch or r universe?
 ask Claude via pak tree?
 
 ==for sure:
-tidyverse (dplyr rlang purrr stringr readr ggplot2...)
+tidyverse (dplyr rlang purrr stringr readr ggplot2 tidyr... magrittr)
 testthat
 cli
 
-janitor
+here
+usethis
+glue
+assertthat
 
-snake_case
-
+fs
+ps
+callr
+janitor snake_case
+tictoc
 
 
 ==maybe:
-glue
-assertthat
+use_tidy_... usethis?
+ellmer
+mcptools
+devtools
 waldo
-tictoc
-bench
+withr
 
+bench
 lobstr
 skimr
 
@@ -37,6 +45,7 @@ DBI
 odbc
 targets
 igraph
+qs2
 
 readxl
 openxlsx2
@@ -44,9 +53,12 @@ openxlsx2
 
 ==no:
 zeallot
+Rcpp
+RcppParallel
 
 arrow
 duckdb
+nanoparquet
 
 
 ==non cran:
