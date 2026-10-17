@@ -12,13 +12,20 @@ lookup cranwatch or r universe?
 ask Claude via pak tree?
 
 ==for sure:
-tidyverse (dplyr rlang purrr stringr readr ggplot2 tidyr... magrittr)
+duckdb-cli
+quarto?
+
+tidyverse (dplyr rlang purrr stringr readr tibble ggplot2 tidyr...
+           ... magrittr pillar vctrs lubridate forcats tidyselect)
 testthat
 cli
+data.table
 
 here
 usethis
 glue
+stringi
+
 assertthat
 
 fs
@@ -26,19 +33,39 @@ ps
 callr
 janitor snake_case
 tictoc
+remotes
+httr
+httr2
+skimr
+
+lintr
+stylr
+wrapr
+curl
 
 
 ==maybe:
+renv
 use_tidy_... usethis?
-ellmer
-mcptools
 devtools
+config
+box
 waldo
 withr
+jsonlite
+yaml
+reticulate
+scales
+rvest
+vroom
+arsenal?
+
+nanonext
+ellmer
+mcptools
 
 bench
 lobstr
-skimr
 
 dbplyr
 DBI
@@ -53,16 +80,26 @@ openxlsx2
 
 ==no:
 zeallot
-Rcpp
-RcppParallel
+Rcpp RcppParallel
+S7
+doctest
+tidytab
+logr autometric
+onetime
+mutagen
+bootstraper
+pak
 
 arrow
-duckdb
+duckdb duckplyr dtplyr multiplyr
+RSQLite
 nanoparquet
-
+nanoarrow
+digest
 
 ==non cran:
 polars-r
+polars0?
 tidypolars-r
 
 
