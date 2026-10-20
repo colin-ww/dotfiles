@@ -54,3 +54,13 @@ somewhere else if not a pkg? required_pkgs.txt?
 ## Check Gitlab is connected/password works
 
 
+
+## Other sections could consider
+
+idea1: 
+- x
+- x
+
+
+
+
