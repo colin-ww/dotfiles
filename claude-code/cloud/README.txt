@@ -12,6 +12,11 @@ holds only this bootstrap, which downloads + runs R-setup.sh from main:
 
 Workflow: edit R-setup.sh -> merge to main -> bump the date line in the env field.
 
+## scan-repo-deps.R
+
+What do my repos use (all branches) that the env doesn't install? Run in a
+cloud session: Rscript claude-code/cloud/scan-repo-deps.R ../sc-nts-frame ../rr-tests
+
 
 https://code.claude.com/docs/en/cloud-environments
 
