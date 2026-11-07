@@ -3,6 +3,16 @@
 
 instr: copy into an env's (eg Default) setup/startup script field
 
+
+https://code.claude.com/docs/en/cloud-environments
+
+also instructions custom claude.md based on cat, as I'm doing
+
+4 vCPUs
+16 GB of RAM
+30 GB of disk
+
+
 components, drafts:
 
 ### pkgs
