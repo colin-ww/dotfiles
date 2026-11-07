@@ -31,9 +31,13 @@ assertthat
 fs
 ps
 callr
-janitor snake_case
-tictoc
-remotes
+
+
+https://github.com/hadley/data-diff
+multiplyr
+
+reshape2
+
 httr
 httr2
 skimr
