@@ -99,6 +99,7 @@ dbplyr
 DBI
 odbc
 targets
+tarchetypes   # targets helpers (tar_hook_before...). rr-tests 04-targets.R uses it, its tests don't -> not in R-setup.sh yet (2026.11.07)
 igraph
 qs2
 
