@@ -62,6 +62,7 @@ echo "deb https://cloud.r-project.org/bin/linux/ubuntu ${CODENAME}-cran40/" \
 #   curl/ssl -> httr, curl     xml2 -> xml2, rvest     uv -> fs
 #   fontconfig/harfbuzz/fribidi/freetype/png/tiff/jpeg -> ragg, textshaping
 #   (ggplot2 graphics)
+#   2026.11.03: I just added this for igraph/crew/targets: libglpk-dev
 # WATCH OUT: if a package later says "cannot open shared object libXYZ.so",
 #   a system lib is missing. Add its -dev package to this list.
 # ----------------------------------------------------------------------------
@@ -71,6 +72,7 @@ apt-get install -y -qq --no-install-recommends \
   libcurl4-openssl-dev libssl-dev libxml2-dev libuv1-dev \
   libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
   libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev \
+  libglpk-dev \
   || { echo "FAIL: R install"; exit 1; }
 
 # ----------------------------------------------------------------------------
@@ -120,7 +122,33 @@ pkgs <- c(
   "duckdb",      # fast local SQL on files
   "data.table",  # fast fread/fwrite
   "targets",     # pipelines
-  "here"         # project-relative paths
+  "here",        # project-relative paths
+  "crew",
+  "poorman",
+  "devtools",
+  "assertthat",
+  "qs2",
+  "box",
+  "pointblank",
+  "waldo",
+  "lobstr",
+  "config",
+  "tictoc",
+  "bench",
+  "remotes",
+  "pak",
+  "renv",
+  "collapse",
+  "zeallot",
+  "wrapr",
+  "rlist",
+  "listr",
+  "openxlsx2",
+  "nanoparquet",
+  "nanoarrow",
+  "duckplyr",
+  "dtplyr",
+  "RSQLite"
 )
 install.packages(pkgs)
 missing <- setdiff(pkgs, rownames(installed.packages()))
