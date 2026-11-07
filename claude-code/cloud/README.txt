@@ -1,7 +1,16 @@
 
 ## R-setup.sh
 
-instr: copy into an env's (eg Default) setup/startup script field
+Single source of truth for the cloud env. The env's "Setup script" field
+holds only this bootstrap, which downloads + runs R-setup.sh from main:
+
+    #!/bin/bash
+    # v2026-11-07  <- bump after editing R-setup.sh (env cache only rebuilds when this text changes, or ~7 days)
+    set -euo pipefail
+    curl -fsSL https://raw.githubusercontent.com/colin-ww/dotfiles/main/claude-code/cloud/R-setup.sh -o /tmp/R-setup.sh
+    bash /tmp/R-setup.sh
+
+Workflow: edit R-setup.sh -> merge to main -> bump the date line in the env field.
 
 
 https://code.claude.com/docs/en/cloud-environments

@@ -2,8 +2,14 @@
 
 # see: https://claude.ai/chat/1540efcf-491e-4344-b536-f47f11156400
 
+# SOURCE OF TRUTH: this file. The cloud env's "Setup script" field only
+# downloads + runs it (bootstrap in README.txt). After editing this file and
+# merging to main, bump the version date in the env's field: the env cache
+# only rebuilds when that field's text changes (or after ~7 days).
+
 # time takes to run:
 #   2026.10.16: 0m47 - first draft
+#   2026.11.07: 0m42 - 31 extras (live env log)
 
 # ============================================================================
 # Claude Code cloud env: R + tidyverse-style stack
@@ -114,41 +120,22 @@ Rscript -e 'install.packages("tidyverse")' || { echo "FAIL: tidyverse"; exit 1; 
 # ----------------------------------------------------------------------------
 Rscript -e '
 pkgs <- c(
-  "janitor",     # clean_names, tabyl
-  "testthat",    # unit tests
-  "styler",      # auto-format code
-  "lintr",       # lint / style checks
-  "arrow",       # parquet
-  "duckdb",      # fast local SQL on files
-  "data.table",  # fast fread/fwrite
-  "targets",     # pipelines
-  "here",        # project-relative paths
-  "crew",
-  "poorman",
-  "devtools",
-  "assertthat",
-  "qs2",
-  "box",
-  "pointblank",
-  "waldo",
-  "lobstr",
-  "config",
-  "tictoc",
-  "bench",
-  "remotes",
-  "pak",
-  "renv",
-  "collapse",
-  "zeallot",
-  "wrapr",
-  "rlist",
-  "listr",
-  "openxlsx2",
-  "nanoparquet",
-  "nanoarrow",
-  "duckplyr",
-  "dtplyr",
-  "RSQLite"
+  # dev / workflow
+  "devtools", "testthat", "lintr", "styler", "here", "config", "box",
+  "renv", "pak", "remotes",
+  # read / write
+  "arrow", "duckdb", "data.table", "nanoparquet", "nanoarrow", "qs2",
+  "openxlsx2", "RSQLite",
+  # dplyr backends / fast data
+  "dtplyr", "duckplyr", "multidplyr", "collapse", "poorman",
+  # pipelines
+  "targets", "crew",
+  # checks / compare
+  "janitor", "assertthat", "pointblank", "waldo", "datadiff",
+  # timing / memory
+  "bench", "tictoc", "lobstr",
+  # syntax / lists
+  "zeallot", "wrapr", "rlist", "listr"
 )
 install.packages(pkgs)
 missing <- setdiff(pkgs, rownames(installed.packages()))
