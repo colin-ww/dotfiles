@@ -1,3 +1,4 @@
+# claude-code/cloud
 
 ## R-setup.sh
 
@@ -15,9 +16,19 @@ Workflow: edit R-setup.sh -> merge to main -> bump the date line in the env fiel
 ## scan-repo-deps.R
 
 What do my repos use (all branches) that the env doesn't install? Run in a
-cloud session: Rscript claude-code/cloud/scan-repo-deps.R ../sc-nts-frame ../rr-tests
+cloud session:
 
+```
+Rscript claude-code/cloud/scan-repo-deps.R ../sc-nts-frame ../rr-tests
+```
 
+-----
+
+-----
+
+<br>
+
+```
 https://code.claude.com/docs/en/cloud-environments
 
 also instructions custom claude.md based on cat, as I'm doing
@@ -25,6 +36,7 @@ also instructions custom claude.md based on cat, as I'm doing
 4 vCPUs
 16 GB of RAM
 30 GB of disk
+
 
 
 components, drafts:
@@ -136,5 +148,9 @@ tidypolars-r
 ### CLAUDE.md
 
 ping every 2h if ultra effort?
+
+
+```
+
 
 
