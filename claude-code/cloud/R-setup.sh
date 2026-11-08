@@ -2,8 +2,14 @@
 
 # see: https://claude.ai/chat/1540efcf-491e-4344-b536-f47f11156400
 
+# SOURCE OF TRUTH: this file. The cloud env's "Setup script" field only
+# downloads + runs it (bootstrap in README.txt). After editing this file and
+# merging to main, bump the version date in the env's field: the env cache
+# only rebuilds when that field's text changes (or after ~7 days).
+
 # time takes to run:
 #   2026.10.16: 0m47 - first draft
+#   2026.11.07: 0m42 - 31 extras (live env log)
 
 # ============================================================================
 # Claude Code cloud env: R + tidyverse-style stack
@@ -63,6 +69,7 @@ echo "deb https://cloud.r-project.org/bin/linux/ubuntu ${CODENAME}-cran40/" \
 #   fontconfig/harfbuzz/fribidi/freetype/png/tiff/jpeg -> ragg, textshaping
 #   (ggplot2 graphics)
 #   2026.11.03: I just added this for igraph/crew/targets: libglpk-dev
+#   2026.11.07: unixodbc-dev -> odbc (libodbc.so.2; sc-nts-frame box::use()s odbc)
 # WATCH OUT: if a package later says "cannot open shared object libXYZ.so",
 #   a system lib is missing. Add its -dev package to this list.
 # ----------------------------------------------------------------------------
@@ -72,7 +79,7 @@ apt-get install -y -qq --no-install-recommends \
   libcurl4-openssl-dev libssl-dev libxml2-dev libuv1-dev \
   libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
   libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev \
-  libglpk-dev \
+  libglpk-dev unixodbc-dev \
   || { echo "FAIL: R install"; exit 1; }
 
 # ----------------------------------------------------------------------------
@@ -110,45 +117,31 @@ Rscript -e 'install.packages("tidyverse")' || { echo "FAIL: tidyverse"; exit 1; 
 # STEP 4b: Extra R packages  (~0.5-1 min). EDIT FREELY.
 # Soft fail: a failure is logged but the session still starts.
 # Biggest downloads: arrow, duckdb. Drop them if runtime creeps toward 5 min.
-# NOT useful here: odbc/ROracle. The cloud VM can't reach StatCan DBs anyway.
+# Covers everything sc-nts-frame + rr-tests tests use, all branches (2026.11.07,
+#   check again with: Rscript claude-code/cloud/scan-repo-deps.R <repo dirs>).
+#   Can't: zonetools, RDCI (internal GitLab). Left out on purpose ("trying a
+#   pkg", not tests): tidytable, hablar, polars, tidypolars, tarchetypes.
+# odbc: the cloud VM can't reach StatCan DBs, but the code loads odbc, so it
+#   must install. ROracle: not needed.
 # ----------------------------------------------------------------------------
 Rscript -e '
 pkgs <- c(
-  "janitor",     # clean_names, tabyl
-  "testthat",    # unit tests
-  "styler",      # auto-format code
-  "lintr",       # lint / style checks
-  "arrow",       # parquet
-  "duckdb",      # fast local SQL on files
-  "data.table",  # fast fread/fwrite
-  "targets",     # pipelines
-  "here",        # project-relative paths
-  "crew",
-  "poorman",
-  "devtools",
-  "assertthat",
-  "qs2",
-  "box",
-  "pointblank",
-  "waldo",
-  "lobstr",
-  "config",
-  "tictoc",
-  "bench",
-  "remotes",
-  "pak",
-  "renv",
-  "collapse",
-  "zeallot",
-  "wrapr",
-  "rlist",
-  "listr",
-  "openxlsx2",
-  "nanoparquet",
-  "nanoarrow",
-  "duckplyr",
-  "dtplyr",
-  "RSQLite"
+  # dev / workflow
+  "devtools", "testthat", "lintr", "styler", "here", "config", "box",
+  "renv", "pak", "remotes",
+  # read / write / databases
+  "arrow", "duckdb", "data.table", "nanoparquet", "nanoarrow", "qs2",
+  "openxlsx2", "RSQLite", "odbc",
+  # dplyr backends / fast data
+  "dtplyr", "duckplyr", "multidplyr", "collapse", "poorman",
+  # pipelines
+  "targets", "crew",
+  # checks / compare
+  "janitor", "assertthat", "pointblank", "waldo", "datadiff",
+  # timing / memory
+  "bench", "tictoc", "lobstr",
+  # syntax / lists
+  "zeallot", "wrapr", "rlist", "listr"
 )
 install.packages(pkgs)
 missing <- setdiff(pkgs, rownames(installed.packages()))

@@ -1,7 +1,21 @@
 
 ## R-setup.sh
 
-instr: copy into an env's (eg Default) setup/startup script field
+Single source of truth for the cloud env. The env's "Setup script" field
+holds only this bootstrap, which downloads + runs R-setup.sh from main:
+
+    #!/bin/bash
+    # v2026-11-07  <- bump after editing R-setup.sh (env cache only rebuilds when this text changes, or ~7 days)
+    set -euo pipefail
+    curl -fsSL https://raw.githubusercontent.com/colin-ww/dotfiles/main/claude-code/cloud/R-setup.sh -o /tmp/R-setup.sh
+    bash /tmp/R-setup.sh
+
+Workflow: edit R-setup.sh -> merge to main -> bump the date line in the env field.
+
+## scan-repo-deps.R
+
+What do my repos use (all branches) that the env doesn't install? Run in a
+cloud session: Rscript claude-code/cloud/scan-repo-deps.R ../sc-nts-frame ../rr-tests
 
 
 https://code.claude.com/docs/en/cloud-environments
@@ -85,6 +99,7 @@ dbplyr
 DBI
 odbc
 targets
+tarchetypes   # targets helpers (tar_hook_before...). rr-tests 04-targets.R uses it, its tests don't -> not in R-setup.sh yet (2026.11.07)
 igraph
 qs2
 
