@@ -76,10 +76,16 @@ echo "deb https://cloud.r-project.org/bin/linux/ubuntu ${CODENAME}-cran40/" \
 apt-get update -qq || { echo "FAIL: apt update"; exit 1; }
 apt-get install -y -qq --no-install-recommends \
   r-base r-base-dev \
-  libcurl4-openssl-dev libssl-dev libxml2-dev libuv1-dev \
-  libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
-  libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev \
-  libglpk-dev unixodbc-dev \
+  libcurl4-openssl-dev libssl-dev \
+  libxml2-dev \
+  libuv1-dev \
+  libfontconfig1-dev \
+  libharfbuzz-dev \
+  libfribidi-dev \
+  libfreetype6-dev \
+  libpng-dev libtiff5-dev libjpeg-dev \
+  libglpk-dev \
+  unixodbc-dev \
   || { echo "FAIL: R install"; exit 1; }
 
 # ----------------------------------------------------------------------------
@@ -126,22 +132,33 @@ Rscript -e 'install.packages("tidyverse")' || { echo "FAIL: tidyverse"; exit 1; 
 # ----------------------------------------------------------------------------
 Rscript -e '
 pkgs <- c(
-  # dev / workflow
-  "devtools", "testthat", "lintr", "styler", "here", "config", "box",
-  "renv", "pak", "remotes",
-  # read / write / databases
-  "arrow", "duckdb", "data.table", "nanoparquet", "nanoarrow", "qs2",
-  "openxlsx2", "RSQLite", "odbc",
-  # dplyr backends / fast data
-  "dtplyr", "duckplyr", "multidplyr", "collapse", "poorman",
-  # pipelines
-  "targets", "crew",
-  # checks / compare
-  "janitor", "assertthat", "pointblank", "waldo", "datadiff",
+  # dev
+  "devtools", "testthat", "lintr", "styler", "here",
+  #
   # timing / memory
   "bench", "tictoc", "lobstr",
+  #
+  # pkgs
+  "box", "renv", "pak", "remotes",
+  #
+  # check
+  "pointblank", "assertthat", "checkmate",
+  # 
+  # IO
+  "arrow", "duckdb", "nanoarrow", "nanoparquet",
+  "qs2", "openxlsx2", "RSQLite", "odbc",
+  #
+  # speed
+  "dtplyr", "duckplyr", "collapse", "data.table",
+  # 
+  # workflow
+  "config", "targets", "crew",
+  #
   # syntax / lists
-  "zeallot", "wrapr", "rlist", "listr"
+  "zeallot", "wrapr", "rlist", "listr", "poorman",
+  #
+  # compare / desc
+  "waldo", "skimr", "janitor"
 )
 install.packages(pkgs)
 missing <- setdiff(pkgs, rownames(installed.packages()))
