@@ -1,0 +1,29 @@
+name: cloud-setup
+# Tests claude-code/cloud/R-setup.sh before it reaches main (the cloud env
+# downloads it from main). Catches apt/CRAN name typos fast, then runs the
+# whole script for real on noble.
+on:
+  pull_request:
+    paths: ["claude-code/cloud/**", ".github/workflows/cloud-setup.yml"]
+  push:
+    branches: [main]
+    paths: ["claude-code/cloud/**", ".github/workflows/cloud-setup.yml"]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash claude-code/cloud/check.sh
+
+  full-run:
+    needs: check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run R-setup.sh (config from this checkout, not main)
+        run: sudo CFG_DIR="$PWD/claude-code/cloud" bash claude-code/cloud/R-setup.sh
+      - name: igraph loads (needs libglpk.so.40)
+        run: Rscript -e 'library(igraph); library(targets); library(crew); cat("ok\n")'

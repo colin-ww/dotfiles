@@ -1,0 +1,27 @@
+# System packages for R-setup.sh (one or more per line, "#" starts a comment).
+# Checked in CI (check.sh): every name must exist in apt on Ubuntu noble.
+# WATCH OUT: R pkg says "cannot open shared object libXYZ.so" -> a system lib
+#   is missing. Add its -dev package here (the -dev pulls in the runtime lib).
+
+# R itself (CRAN's repo, newer than Ubuntu's). r-base-dev = compilers/headers
+# so a pkg with no binary can still build from source.
+r-base r-base-dev
+
+# curl/ssl -> httr, curl     xml2 -> xml2, rvest     uv -> fs
+libcurl4-openssl-dev libssl-dev
+libxml2-dev
+libuv1-dev
+
+# ragg, textshaping (ggplot2 graphics)
+libfontconfig1-dev
+libharfbuzz-dev
+libfribidi-dev
+libfreetype-dev     # NOT libfreetype6-dev: virtual pkg on noble
+libpng-dev libtiff-dev libjpeg-dev   # libtiff5-dev was jammy, noble is libtiff-dev
+
+# igraph (-> targets, crew). Also pulls libglpk40 (libglpk.so.40) in.
+# NOT "libglpk40-dev": doesn't exist, broke the setup on 2026-11-13.
+libglpk-dev libglpk40
+
+# odbc (libodbc.so.2; sc-nts-frame box::use()s odbc)
+unixodbc-dev

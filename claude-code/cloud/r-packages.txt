@@ -1,0 +1,39 @@
+# R packages for R-setup.sh, installed after tidyverse (which is hard-coded).
+# Whitespace-separated, "#" starts a comment. Soft fail: a failed pkg is
+# logged, the session still starts. Checked in CI (check.sh): each name must
+# be on CRAN (Posit Package Manager).
+# Biggest downloads: arrow, duckdb. Drop them if runtime creeps toward 5 min.
+# Covers sc-nts-frame + rr-tests, all branches (2026.11.07; re-check with
+#   Rscript claude-code/cloud/scan-repo-deps.R <repo dirs>).
+#   Can't: zonetools, RDCI (internal GitLab). Left out on purpose ("trying a
+#   pkg", not tests): tidytable, hablar, polars, tidypolars, tarchetypes.
+# odbc: the cloud VM can't reach StatCan DBs, but code loads odbc, so it must
+#   install. ROracle: not needed.
+
+# dev
+devtools testthat lintr styler here
+
+# timing / memory
+bench tictoc lobstr
+
+# pkgs
+box renv pak remotes
+
+# check
+pointblank assertthat checkmate
+
+# IO
+arrow duckdb nanoarrow nanoparquet
+qs2 openxlsx2 RSQLite odbc
+
+# speed
+dtplyr duckplyr collapse data.table
+
+# workflow
+config targets crew
+
+# syntax / lists
+zeallot wrapr rlist listr poorman
+
+# compare / desc
+waldo skimr janitor
