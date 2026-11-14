@@ -8,6 +8,7 @@
 | `r-packages.txt` | extra R pkgs by category | you want a pkg preinstalled |
 | `user-claude.md` | becomes `~/.claude/CLAUDE.md` in every cloud session | Claude needs to know something about the env |
 | `R-setup.sh` | the code: reads the three files above | steps change (rare) |
+| `pkg-inventory.R` | csv of every installed R pkg: direct / indirect / both (CI uploads it as an artifact) | you wonder "is X installed, and why?" |
 | `check.sh` | tests (bash syntax, shellcheck, apt/CRAN names exist) | - |
 
 CI (`.github/workflows/cloud-setup.yml`) runs `check.sh`, then the whole

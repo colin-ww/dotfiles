@@ -33,3 +33,9 @@ jobs:
         run: sudo CFG_DIR="$PWD/claude-code/cloud" bash claude-code/cloud/R-setup.sh
       - name: igraph loads (needs libglpk.so.40)
         run: Rscript -e 'library(igraph); library(targets); library(crew); cat("ok\n")'
+      - name: "Package inventory csv (package, version, direct/indirect/both)"
+        run: Rscript claude-code/cloud/pkg-inventory.R r-packages-installed.csv
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r-packages-installed
+          path: r-packages-installed.csv

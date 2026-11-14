@@ -18,7 +18,7 @@ spelling   # hunspell: spelling::spell_check_files("README.md")
 bench tictoc lobstr
 
 # pkgs
-box renv pak remotes
+box renv pak remotes pacman
 
 # check
 pointblank assertthat checkmate
@@ -27,14 +27,18 @@ pointblank assertthat checkmate
 arrow duckdb nanoarrow nanoparquet
 qs2 openxlsx2 RSQLite odbc
 
-# speed
+# speed / parallel
 dtplyr duckplyr collapse data.table
+parallelly progressr
 
 # workflow
 config targets crew
 
 # syntax / lists
 zeallot wrapr rlist listr poorman
+
+# files / processes
+fs ps
 
 # compare / desc
 waldo skimr janitor
