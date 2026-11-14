@@ -1,0 +1,41 @@
+name: cloud-setup
+# Tests claude-code/cloud/R-setup.sh before it reaches main (the cloud env
+# downloads it from main). Catches apt/CRAN name typos fast, then runs the
+# whole script for real on noble.
+on:
+  pull_request:
+    paths: &paths
+      - "claude-code/cloud/**"
+      - "!claude-code/cloud/README.md"
+      - "!claude-code/cloud/scan-repo-deps.R"
+      - ".github/workflows/cloud-setup.yml"
+  push:
+    branches: [main]
+    paths: *paths
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install codespell  # spell check, used by check.sh
+      - run: bash claude-code/cloud/check.sh
+
+  full-run:
+    needs: check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run R-setup.sh (config from this checkout, not main)
+        timeout-minutes: 4  # cloud env caches only if setup < ~5 min
+        run: sudo CFG_DIR="$PWD/claude-code/cloud" bash claude-code/cloud/R-setup.sh
+      - name: igraph loads (needs libglpk.so.40)
+        run: Rscript -e 'library(igraph); library(targets); library(crew); cat("ok\n")'
+      - name: "Package inventory csv (package, version, direct/indirect/both)"
+        run: Rscript claude-code/cloud/pkg-inventory.R r-packages-installed.csv
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r-packages-installed
+          path: r-packages-installed.csv
