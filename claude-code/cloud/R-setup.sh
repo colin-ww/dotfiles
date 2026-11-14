@@ -144,5 +144,7 @@ install -D -m 644 "$CFG_DIR/user-claude.md" ~/.claude/CLAUDE.md
 Rscript -e 'suppressMessages(library(tidyverse)); cat("R", as.character(getRversion()), "OK\n")' \
   || { echo "FAIL: self-check"; exit 1; }
 
-echo "=== setup done: $(date) ==="
+echo "=== setup done: $(date), took ${SECONDS}s ==="
+# Snapshot is only cached if the whole script finishes in ~5 min.
+[ "$SECONDS" -le 240 ] || echo "WARN: setup took over 4 min, close to the ~5 min cache limit"
 exit 0

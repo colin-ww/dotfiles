@@ -4,10 +4,14 @@ name: cloud-setup
 # whole script for real on noble.
 on:
   pull_request:
-    paths: ["claude-code/cloud/**", ".github/workflows/cloud-setup.yml"]
+    paths: &paths
+      - "claude-code/cloud/**"
+      - "!claude-code/cloud/README.md"
+      - "!claude-code/cloud/scan-repo-deps.R"
+      - ".github/workflows/cloud-setup.yml"
   push:
     branches: [main]
-    paths: ["claude-code/cloud/**", ".github/workflows/cloud-setup.yml"]
+    paths: *paths
   workflow_dispatch:
 
 jobs:
@@ -24,6 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run R-setup.sh (config from this checkout, not main)
+        timeout-minutes: 4  # cloud env caches only if setup < ~5 min
         run: sudo CFG_DIR="$PWD/claude-code/cloud" bash claude-code/cloud/R-setup.sh
       - name: igraph loads (needs libglpk.so.40)
         run: Rscript -e 'library(igraph); library(targets); library(crew); cat("ok\n")'

@@ -19,9 +19,9 @@ libfribidi-dev
 libfreetype-dev     # NOT libfreetype6-dev: virtual pkg on noble
 libpng-dev libtiff-dev libjpeg-dev   # libtiff5-dev was jammy, noble is libtiff-dev
 
-# igraph (-> targets, crew). Also pulls libglpk40 (libglpk.so.40) in.
-# NOT "libglpk40-dev": doesn't exist, broke the setup on 2026-11-13.
-libglpk-dev libglpk40
+# igraph (-> targets, crew). Depends on libglpk40 (libglpk.so.40), so no need
+# to list it. NOT "libglpk40-dev": doesn't exist, broke setup on 2026-11-13.
+libglpk-dev
 
 # odbc (libodbc.so.2; sc-nts-frame box::use()s odbc)
 unixodbc-dev

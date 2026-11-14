@@ -23,7 +23,7 @@ Single source of truth for the cloud env. The env's "Setup script" field
 holds only this bootstrap, which downloads + runs R-setup.sh from main:
 
     #!/bin/bash
-    # v2026-11-14  <- bump after editing anything in this folder (env cache only rebuilds when this text changes, or ~7 days)
+    # v2026-11-14  <- bump after editing R-setup.sh or the 3 config files (env cache only rebuilds when this text changes, or ~7 days; README etc. don't matter)
     set -euo pipefail
     curl -fsSL https://raw.githubusercontent.com/colin-ww/dotfiles/main/claude-code/cloud/R-setup.sh -o /tmp/R-setup.sh
     bash /tmp/R-setup.sh
