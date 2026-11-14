@@ -145,7 +145,7 @@ tidytab
 logr autometric
 onetime
 mutagen
-bootstraper
+bootstrapper
 pak
 
 arrow

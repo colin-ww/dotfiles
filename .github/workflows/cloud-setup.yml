@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - run: pip install codespell  # spell check, used by check.sh
       - run: bash claude-code/cloud/check.sh
 
   full-run:

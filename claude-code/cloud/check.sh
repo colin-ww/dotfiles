@@ -16,6 +16,11 @@ if command -v shellcheck >/dev/null; then
   shellcheck -S warning R-setup.sh check.sh || bad "shellcheck"
 else echo "(shellcheck not installed, skipped)"; fi
 
+echo "== spelling (codespell: pip install codespell)"
+if command -v codespell >/dev/null; then
+  codespell . ../../.github || bad "codespell"
+else echo "(codespell not installed, skipped)"; fi
+
 echo "== config files present"
 for f in apt-packages.txt r-packages.txt user-claude.md; do [ -s "$f" ] || bad "$f missing/empty"; done
 for f in $(grep -o '[a-z-]*\.\(txt\|md\)' <<<"$(grep '^CFG_FILES=' R-setup.sh)"); do
