@@ -6,6 +6,10 @@
 - Never reinstall R or packages that are already installed. Never build R from source.
 - Installs done mid-session are NOT kept for the next session. If a package is needed regularly, tell the user to add it to `claude-code/cloud/r-packages.txt` in the dotfiles repo (system libs: `apt-packages.txt`).
 
+## Preinstalled checkers
+- `codespell <dir>` (typos in code/comments/docs), `shellcheck` (bash), R `lintr`, `styler`, `spelling`.
+- Run them on what you changed before committing, if the repo has no stricter rules.
+
 ## If something is broken
 - Read `/var/log/cc-setup.log` first (full setup output). If setup failed, the session started without it.
 - `cannot open shared object file: libXYZ.so` = missing system library. Fix for this session with `apt-get install -y <pkg>` (find it with `apt-file`/`apt-cache search`), then tell the user the exact `-dev` package name so it can go into `apt-packages.txt`. Don't guess names: check `apt-cache policy <pkg>` first (Ubuntu 24.04 "noble").

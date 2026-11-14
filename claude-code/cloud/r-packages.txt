@@ -12,6 +12,7 @@
 
 # dev
 devtools testthat lintr styler here
+spelling   # hunspell: spelling::spell_check_files("README.md")
 
 # timing / memory
 bench tictoc lobstr

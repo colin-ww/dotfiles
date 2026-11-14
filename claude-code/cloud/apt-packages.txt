@@ -25,3 +25,6 @@ libglpk-dev
 
 # odbc (libodbc.so.2; sc-nts-frame box::use()s odbc)
 unixodbc-dev
+
+# dev tools for editing the repos (check.sh uses both; apt versions are fine)
+codespell shellcheck
