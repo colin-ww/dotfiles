@@ -70,6 +70,9 @@ echo "deb https://cloud.r-project.org/bin/linux/ubuntu ${CODENAME}-cran40/" \
 #   (ggplot2 graphics)
 #   2026.11.03: I just added this for igraph/crew/targets: libglpk-dev
 #   2026.11.07: unixodbc-dev -> odbc (libodbc.so.2; sc-nts-frame box::use()s odbc)
+#   2026.11.13: claude session said:
+#     Missing system library: libglpk40 (libglpk.so.40, needed by igraph, which targets loads). For your setup script: apt-get install -y libglpk40
+#     error when try souwce script with box use targets: unable to load shared object '/usr/local/lib/R/site-library/igraph/libs/igraph.so': libglpk.so.40: cannot open shared object file: No such file or directory
 # WATCH OUT: if a package later says "cannot open shared object libXYZ.so",
 #   a system lib is missing. Add its -dev package to this list.
 # ----------------------------------------------------------------------------
@@ -84,7 +87,7 @@ apt-get install -y -qq --no-install-recommends \
   libfribidi-dev \
   libfreetype6-dev \
   libpng-dev libtiff5-dev libjpeg-dev \
-  libglpk-dev \
+  libglpk-dev libglpk40-dev \
   unixodbc-dev \
   || { echo "FAIL: R install"; exit 1; }
 
