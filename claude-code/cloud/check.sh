@@ -4,7 +4,7 @@
 # Catches the typos that break the cloud env: bash errors, apt names that don't
 # exist (eg libglpk40-dev, 2026-11-13), R pkgs not on CRAN.
 set -uo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 fail=0
 bad() { echo "FAIL: $*"; fail=1; }
 words() { sed 's/#.*//' "$1" | tr -s ' \t' '\n' | grep . || true; }
