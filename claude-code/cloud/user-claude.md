@@ -8,7 +8,9 @@
 
 ## Preinstalled checkers
 - `codespell <dir>` (typos in code/comments/docs), `shellcheck` (bash), R `lintr`, `styler`, `spelling`.
-- Run them on what you changed before committing, if the repo has no stricter rules.
+- Available if useful, not required on every session. Good moments: before committing a script you edited (`shellcheck`, `codespell`), or when asked to review/clean code.
+- Don't run `styler` on existing files unprompted: it reformats whole files and makes noisy diffs.
+- A repo's own CLAUDE.md / CI rules win over this file.
 
 ## If something is broken
 - Read `/var/log/cc-setup.log` first (full setup output). If setup failed, the session started without it.
