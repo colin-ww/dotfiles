@@ -2,8 +2,9 @@
 
 # see: https://claude.ai/chat/1540efcf-491e-4344-b536-f47f11156400
 
-# SOURCE OF TRUTH: this file. The cloud env's "Setup script" field only
-# downloads + runs it (bootstrap in README.txt). After editing this file and
+# SOURCE OF TRUTH: this file + apt-packages.txt, r-packages.txt, user-claude.md
+# (same folder). The cloud env's "Setup script" field only
+# downloads + runs it (bootstrap in README.md). After editing this file and
 # merging to main, bump the version date in the env's field: the env cache
 # only rebuilds when that field's text changes (or after ~7 days).
 
@@ -29,7 +30,11 @@
 # FAILURE POLICY:
 #   - Core (R itself, tidyverse): fail loudly with exit 1. The session won't
 #     start, so you notice, and a broken setup doesn't get cached for 7 days.
-#   - Extras: soft fail, logged, the session still starts.
+#   - Extras: soft fail, logged as "WARN:", the session still starts. A
+#     failed setup = a session with NO R at all, so one flaky extra pkg
+#     shouldn't cost you everything.
+#   - STRICT=1 (CI sets it): any WARN makes the script exit 1 at the end, so
+#     problems turn CI red before they reach main. Soft in sessions, strict in CI.
 #
 # LOG: everything goes to /var/log/cc-setup.log. Ask Claude to read it if
 # something seems off.
@@ -46,6 +51,23 @@ export DEBIAN_FRONTEND=noninteractive  # stop apt from asking questions
 CODENAME="${VERSION_CODENAME:-noble}"
 echo "Ubuntu codename: $CODENAME"
 
+# Config (pkg lists + CLAUDE.md) lives in separate files next to this script.
+# CFG_DIR set (CI, local test) = use that dir. Else download from main.
+CFG_BASE="https://raw.githubusercontent.com/colin-ww/dotfiles/main/claude-code/cloud"
+CFG_FILES="apt-packages.txt r-packages.txt user-claude.md"
+if [ -z "${CFG_DIR:-}" ]; then
+  CFG_DIR="$(mktemp -d)"
+  for f in $CFG_FILES; do
+    curl -fsSL "$CFG_BASE/$f" -o "$CFG_DIR/$f" || { echo "FAIL: download $f"; exit 1; }
+  done
+fi
+echo "Config dir: $CFG_DIR"
+# One word per line, "#" comments stripped.
+words() { sed 's/#.*//' "$1" | tr -s ' \t' '\n' | grep . || true; }
+# Soft failure: log it, count it (STRICT=1 turns any into exit 1 at the end).
+SOFT_FAILS=0
+warn() { echo "WARN: $*"; SOFT_FAILS=$((SOFT_FAILS + 1)); }
+
 # ----------------------------------------------------------------------------
 # STEP 1: Add CRAN's own Ubuntu repo  (~5 s)
 # WHY: Ubuntu's built-in R is older (4.3 on noble). CRAN's repo has current
@@ -61,34 +83,13 @@ echo "deb https://cloud.r-project.org/bin/linux/ubuntu ${CODENAME}-cran40/" \
 
 # ----------------------------------------------------------------------------
 # STEP 2: Install R + system libraries  (~1-1.5 min)
-# r-base      = R plus "recommended" pkgs (Matrix, MASS, survival, ...)
-# r-base-dev  = compilers/headers, so a package with no binary can still
-#               build from source as a fallback
-# lib*-dev    = system libraries tidyverse-type packages link to at runtime:
-#   curl/ssl -> httr, curl     xml2 -> xml2, rvest     uv -> fs
-#   fontconfig/harfbuzz/fribidi/freetype/png/tiff/jpeg -> ragg, textshaping
-#   (ggplot2 graphics)
-#   2026.11.03: I just added this for igraph/crew/targets: libglpk-dev
-#   2026.11.07: unixodbc-dev -> odbc (libodbc.so.2; sc-nts-frame box::use()s odbc)
-#   2026.11.13: claude session said:
-#     Missing system library: libglpk40 (libglpk.so.40, needed by igraph, which targets loads). For your setup script: apt-get install -y libglpk40
-#     error when try souwce script with box use targets: unable to load shared object '/usr/local/lib/R/site-library/igraph/libs/igraph.so': libglpk.so.40: cannot open shared object file: No such file or directory
+# Package list + why each system lib is there: apt-packages.txt
 # WATCH OUT: if a package later says "cannot open shared object libXYZ.so",
-#   a system lib is missing. Add its -dev package to this list.
+#   a system lib is missing. Add its -dev package to apt-packages.txt.
 # ----------------------------------------------------------------------------
 apt-get update -qq || { echo "FAIL: apt update"; exit 1; }
-apt-get install -y -qq --no-install-recommends \
-  r-base r-base-dev \
-  libcurl4-openssl-dev libssl-dev \
-  libxml2-dev \
-  libuv1-dev \
-  libfontconfig1-dev \
-  libharfbuzz-dev \
-  libfribidi-dev \
-  libfreetype6-dev \
-  libpng-dev libtiff5-dev libjpeg-dev \
-  libglpk-dev libglpk40-dev \
-  unixodbc-dev \
+mapfile -t APT_PKGS < <(words "$CFG_DIR/apt-packages.txt")
+apt-get install -y -qq --no-install-recommends "${APT_PKGS[@]}" \
   || { echo "FAIL: R install"; exit 1; }
 
 # ----------------------------------------------------------------------------
@@ -113,6 +114,11 @@ options(
   timeout = 600
 )
 EOF
+# UTF-8: the VM has no LANG, so R ran in the "C" locale: nchar("é") = 2,
+#   toupper("é") = "é", regex "." doesn't match é, prints "Qu\303\251bec".
+#   Bad for French data. C.UTF-8 is built into Ubuntu (no locales pkg needed).
+#   ${LANG-...} = only if LANG isn't already set (R expands it, not bash).
+echo 'LANG=${LANG-C.UTF-8}' >> "$(R RHOME)/etc/Renviron.site"
 
 # ----------------------------------------------------------------------------
 # STEP 4a: Core R packages  (~1-1.5 min)
@@ -126,47 +132,33 @@ Rscript -e 'install.packages("tidyverse")' || { echo "FAIL: tidyverse"; exit 1; 
 # STEP 4b: Extra R packages  (~0.5-1 min). EDIT FREELY.
 # Soft fail: a failure is logged but the session still starts.
 # Biggest downloads: arrow, duckdb. Drop them if runtime creeps toward 5 min.
-# Covers everything sc-nts-frame + rr-tests tests use, all branches (2026.11.07,
-#   check again with: Rscript claude-code/cloud/scan-repo-deps.R <repo dirs>).
-#   Can't: zonetools, RDCI (internal GitLab). Left out on purpose ("trying a
-#   pkg", not tests): tidytable, hablar, polars, tidypolars, tarchetypes.
-# odbc: the cloud VM can't reach StatCan DBs, but the code loads odbc, so it
-#   must install. ROracle: not needed.
+# List + notes on what is covered/left out: r-packages.txt
 # ----------------------------------------------------------------------------
 Rscript -e '
-pkgs <- c(
-  # dev
-  "devtools", "testthat", "lintr", "styler", "here",
-  #
-  # timing / memory
-  "bench", "tictoc", "lobstr",
-  #
-  # pkgs
-  "box", "renv", "pak", "remotes",
-  #
-  # check
-  "pointblank", "assertthat", "checkmate",
-  # 
-  # IO
-  "arrow", "duckdb", "nanoarrow", "nanoparquet",
-  "qs2", "openxlsx2", "RSQLite", "odbc",
-  #
-  # speed
-  "dtplyr", "duckplyr", "collapse", "data.table",
-  # 
-  # workflow
-  "config", "targets", "crew",
-  #
-  # syntax / lists
-  "zeallot", "wrapr", "rlist", "listr", "poorman",
-  #
-  # compare / desc
-  "waldo", "skimr", "janitor"
-)
+pkgs <- scan(commandArgs(TRUE)[1], what = "", comment.char = "#", quiet = TRUE)
 install.packages(pkgs)
 missing <- setdiff(pkgs, rownames(installed.packages()))
-if (length(missing)) message("EXTRAS FAILED: ", paste(missing, collapse = ", "))
-' || echo "WARN: extras step errored (see above)"
+if (length(missing)) { message("EXTRAS FAILED: ", paste(missing, collapse = ", ")); quit(status = 1) }
+' "$CFG_DIR/r-packages.txt" || warn "extra R pkgs failed to install (EXTRAS FAILED above)"
+
+# ----------------------------------------------------------------------------
+# STEP 4c: duckdb CLI  (~5 s, 24 MB). Soft fail.
+# Same DuckDB version as the engine inside the R duckdb pkg, so a .duckdb file
+# written by one opens in the other. Not in Ubuntu's apt: official download
+# (same URL as DuckDB's install script; v2+ ships a .tar.gz, v1 was .gz).
+# ~/.duckdb: R duckdb 2.x otherwise keeps extensions in a temp dir (re-downloaded
+#   every session) and prints a notice on every connect. With it, R and the
+#   CLI share one home (same version -> same extensions).
+# ----------------------------------------------------------------------------
+mkdir -p ~/.duckdb
+DUCKDB_V="$(Rscript -e 'con <- DBI::dbConnect(duckdb::duckdb()); cat(DBI::dbGetQuery(con, "select version() v")$v); DBI::dbDisconnect(con)' 2>/dev/null)"
+case "$(uname -m)" in aarch64|arm64) DUCKDB_ARCH=arm64 ;; *) DUCKDB_ARCH=amd64 ;; esac
+{ [ -n "$DUCKDB_V" ] \
+  && curl -fsSL "https://install.duckdb.org/${DUCKDB_V}/duckdb-cli-linux-${DUCKDB_ARCH}.tar.gz" \
+     | tar -xzf - -C /usr/local/bin duckdb \
+  && [ "$(duckdb --version | grep -oE '^v[0-9.]+')" = "$DUCKDB_V" ] \
+  && echo "duckdb CLI $DUCKDB_V OK"; } \
+  || warn "duckdb CLI install failed (wanted ${DUCKDB_V:-?}, same as R duckdb engine)"
 
 # ----------------------------------------------------------------------------
 # STEP 5: Tell Claude what's set up  (instant)
@@ -174,14 +166,7 @@ if (length(missing)) message("EXTRAS FAILED: ", paste(missing, collapse = ", "))
 # session, whatever repo. Stops Claude reinstalling R or compiling things.
 # It combines with any repo CLAUDE.md, it doesn't replace it.
 # ----------------------------------------------------------------------------
-mkdir -p ~/.claude
-cat > ~/.claude/CLAUDE.md <<'EOF'
-# Environment notes (written by the cloud setup script)
-- R (current, from CRAN's Ubuntu repo) and tidyverse + common packages are preinstalled. Run R with Rscript.
-- CRAN is set to Posit Package Manager Linux binaries, so install.packages() is fast for anything missing.
-- Never reinstall R or packages that are already installed. Never build R from source.
-- If R or packages seem broken, read /var/log/cc-setup.log before trying fixes.
-EOF
+install -D -m 644 "$CFG_DIR/user-claude.md" ~/.claude/CLAUDE.md
 
 # ----------------------------------------------------------------------------
 # STEP 6: Self-check  (~5 s)
@@ -189,6 +174,13 @@ EOF
 # ----------------------------------------------------------------------------
 Rscript -e 'suppressMessages(library(tidyverse)); cat("R", as.character(getRversion()), "OK\n")' \
   || { echo "FAIL: self-check"; exit 1; }
+Rscript -e 'x <- "Québec"; stopifnot(l10n_info()[["UTF-8"]], nchar(x) == 6, toupper(x) == "QUÉBEC")' \
+  || warn "R isn't in a UTF-8 locale (accents break)"
 
-echo "=== setup done: $(date) ==="
+echo "=== setup done: $(date), took ${SECONDS}s, $SOFT_FAILS warning(s) ==="
+# Snapshot is only cached if the whole script finishes in ~5 min.
+[ "$SECONDS" -le 240 ] || warn "setup took over 4 min, close to the ~5 min cache limit"
+if [ "${STRICT:-0}" = 1 ] && [ "$SOFT_FAILS" -gt 0 ]; then
+  echo "STRICT: $SOFT_FAILS warning(s) -> exit 1"; exit 1
+fi
 exit 0
