@@ -28,8 +28,9 @@ arrow duckdb nanoarrow nanoparquet
 qs2 openxlsx2 RSQLite odbc
 
 # speed / parallel
-dtplyr duckplyr collapse data.table
+duckplyr collapse
 parallelly progressr
+# dtplyr data.table   # indirect: tidyverse brings dtplyr, dtplyr brings data.table
 
 # workflow
 config targets crew

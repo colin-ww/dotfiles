@@ -7,19 +7,22 @@ set -uo pipefail
 cd "$(dirname "$0")" || exit 1
 fail=0
 bad() { echo "FAIL: $*"; fail=1; }
+# A missing tool skips its check locally, but FAILS in CI (GitHub sets CI=true):
+# a silently skipped check is how shellcheck slipped past once.
+have() {
+  command -v "$1" >/dev/null && return 0
+  if [ -n "${CI:-}" ]; then bad "$1 not installed (CI must run every check)"; else echo "($1 not installed, skipped)"; fi
+  return 1
+}
 words() { sed 's/#.*//' "$1" | tr -s ' \t' '\n' | grep . || true; }
 SUDO=""; [ "$(id -u)" = 0 ] || SUDO="sudo"
 
 echo "== bash syntax + shellcheck"
 bash -n R-setup.sh check.sh || bad "bash syntax"
-if command -v shellcheck >/dev/null; then
-  shellcheck -S warning R-setup.sh check.sh || bad "shellcheck"
-else echo "(shellcheck not installed, skipped)"; fi
+if have shellcheck; then shellcheck -S warning R-setup.sh check.sh || bad "shellcheck"; fi
 
 echo "== spelling (codespell: pip install codespell)"
-if command -v codespell >/dev/null; then
-  codespell --skip="*.csv" . ../../.github || bad "codespell"
-else echo "(codespell not installed, skipped)"; fi
+if have codespell; then codespell --skip="*.csv" . ../../.github || bad "codespell"; fi
 
 echo "== config files present"
 for f in apt-packages.txt r-packages.txt user-claude.md; do [ -s "$f" ] || bad "$f missing/empty"; done

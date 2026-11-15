@@ -30,7 +30,11 @@
 # FAILURE POLICY:
 #   - Core (R itself, tidyverse): fail loudly with exit 1. The session won't
 #     start, so you notice, and a broken setup doesn't get cached for 7 days.
-#   - Extras: soft fail, logged, the session still starts.
+#   - Extras: soft fail, logged as "WARN:", the session still starts. A
+#     failed setup = a session with NO R at all, so one flaky extra pkg
+#     shouldn't cost you everything.
+#   - STRICT=1 (CI sets it): any WARN makes the script exit 1 at the end, so
+#     problems turn CI red before they reach main. Soft in sessions, strict in CI.
 #
 # LOG: everything goes to /var/log/cc-setup.log. Ask Claude to read it if
 # something seems off.
@@ -60,6 +64,9 @@ fi
 echo "Config dir: $CFG_DIR"
 # One word per line, "#" comments stripped.
 words() { sed 's/#.*//' "$1" | tr -s ' \t' '\n' | grep . || true; }
+# Soft failure: log it, count it (STRICT=1 turns any into exit 1 at the end).
+SOFT_FAILS=0
+warn() { echo "WARN: $*"; SOFT_FAILS=$((SOFT_FAILS + 1)); }
 
 # ----------------------------------------------------------------------------
 # STEP 1: Add CRAN's own Ubuntu repo  (~5 s)
@@ -107,6 +114,11 @@ options(
   timeout = 600
 )
 EOF
+# UTF-8: the VM has no LANG, so R ran in the "C" locale: nchar("é") = 2,
+#   toupper("é") = "é", regex "." doesn't match é, prints "Qu\303\251bec".
+#   Bad for French data. C.UTF-8 is built into Ubuntu (no locales pkg needed).
+#   ${LANG-...} = only if LANG isn't already set (R expands it, not bash).
+echo 'LANG=${LANG-C.UTF-8}' >> "$(R RHOME)/etc/Renviron.site"
 
 # ----------------------------------------------------------------------------
 # STEP 4a: Core R packages  (~1-1.5 min)
@@ -126,8 +138,27 @@ Rscript -e '
 pkgs <- scan(commandArgs(TRUE)[1], what = "", comment.char = "#", quiet = TRUE)
 install.packages(pkgs)
 missing <- setdiff(pkgs, rownames(installed.packages()))
-if (length(missing)) message("EXTRAS FAILED: ", paste(missing, collapse = ", "))
-' "$CFG_DIR/r-packages.txt" || echo "WARN: extras step errored (see above)"
+if (length(missing)) { message("EXTRAS FAILED: ", paste(missing, collapse = ", ")); quit(status = 1) }
+' "$CFG_DIR/r-packages.txt" || warn "extra R pkgs failed to install (EXTRAS FAILED above)"
+
+# ----------------------------------------------------------------------------
+# STEP 4c: duckdb CLI  (~5 s, 24 MB). Soft fail.
+# Same DuckDB version as the engine inside the R duckdb pkg, so a .duckdb file
+# written by one opens in the other. Not in Ubuntu's apt: official download
+# (same URL as DuckDB's install script; v2+ ships a .tar.gz, v1 was .gz).
+# ~/.duckdb: R duckdb 2.x otherwise keeps extensions in a temp dir (re-downloaded
+#   every session) and prints a notice on every connect. With it, R and the
+#   CLI share one home (same version -> same extensions).
+# ----------------------------------------------------------------------------
+mkdir -p ~/.duckdb
+DUCKDB_V="$(Rscript -e 'con <- DBI::dbConnect(duckdb::duckdb()); cat(DBI::dbGetQuery(con, "select version() v")$v); DBI::dbDisconnect(con)' 2>/dev/null)"
+case "$(uname -m)" in aarch64|arm64) DUCKDB_ARCH=arm64 ;; *) DUCKDB_ARCH=amd64 ;; esac
+{ [ -n "$DUCKDB_V" ] \
+  && curl -fsSL "https://install.duckdb.org/${DUCKDB_V}/duckdb-cli-linux-${DUCKDB_ARCH}.tar.gz" \
+     | tar -xzf - -C /usr/local/bin duckdb \
+  && [ "$(duckdb --version | grep -oE '^v[0-9.]+')" = "$DUCKDB_V" ] \
+  && echo "duckdb CLI $DUCKDB_V OK"; } \
+  || warn "duckdb CLI install failed (wanted ${DUCKDB_V:-?}, same as R duckdb engine)"
 
 # ----------------------------------------------------------------------------
 # STEP 5: Tell Claude what's set up  (instant)
@@ -143,8 +174,13 @@ install -D -m 644 "$CFG_DIR/user-claude.md" ~/.claude/CLAUDE.md
 # ----------------------------------------------------------------------------
 Rscript -e 'suppressMessages(library(tidyverse)); cat("R", as.character(getRversion()), "OK\n")' \
   || { echo "FAIL: self-check"; exit 1; }
+Rscript -e 'x <- "Québec"; stopifnot(l10n_info()[["UTF-8"]], nchar(x) == 6, toupper(x) == "QUÉBEC")' \
+  || warn "R isn't in a UTF-8 locale (accents break)"
 
-echo "=== setup done: $(date), took ${SECONDS}s ==="
+echo "=== setup done: $(date), took ${SECONDS}s, $SOFT_FAILS warning(s) ==="
 # Snapshot is only cached if the whole script finishes in ~5 min.
-[ "$SECONDS" -le 240 ] || echo "WARN: setup took over 4 min, close to the ~5 min cache limit"
+[ "$SECONDS" -le 240 ] || warn "setup took over 4 min, close to the ~5 min cache limit"
+if [ "${STRICT:-0}" = 1 ] && [ "$SOFT_FAILS" -gt 0 ]; then
+  echo "STRICT: $SOFT_FAILS warning(s) -> exit 1"; exit 1
+fi
 exit 0

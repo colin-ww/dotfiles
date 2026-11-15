@@ -2,6 +2,8 @@
 
 ## What's installed
 - R (current, from CRAN's Ubuntu repo), tidyverse and ~45 extras are preinstalled. Run R with `Rscript`.
+- `duckdb` CLI, same DuckDB version as the R duckdb package; both use `~/.duckdb`.
+- R runs in a UTF-8 locale (`LANG=C.UTF-8` in Renviron.site), so accents work.
 - CRAN is set to Posit Package Manager Linux binaries (Rprofile.site), so `install.packages()` takes seconds for anything missing.
 - Never reinstall R or packages that are already installed. Never build R from source.
 - Installs done mid-session are NOT kept for the next session. If a package is needed regularly, tell the user to add it to `claude-code/cloud/r-packages.txt` in the dotfiles repo (system libs: `apt-packages.txt`).

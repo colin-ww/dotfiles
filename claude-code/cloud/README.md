@@ -12,7 +12,8 @@
 | `check.sh` | tests (bash syntax, shellcheck, apt/CRAN names exist) | - |
 
 CI (`.github/workflows/cloud-setup.yml`) runs `check.sh`, then the whole
-`R-setup.sh` on an Ubuntu 24.04 runner, on every PR touching this folder.
+`R-setup.sh` on an Ubuntu 24.04 runner with `STRICT=1` (any `WARN:` = red; in
+sessions they're soft so one flaky pkg doesn't cost you R), then loads every R pkg.
 Run the quick part locally (as root or with sudo): `bash claude-code/cloud/check.sh`.
 
 No build step: `R-setup.sh` downloads the three files from main at runtime
@@ -24,7 +25,7 @@ Single source of truth for the cloud env. The env's "Setup script" field
 holds only this bootstrap, which downloads + runs R-setup.sh from main:
 
     #!/bin/bash
-    # v2026-11-14  <- bump after editing R-setup.sh or the 3 config files (env cache only rebuilds when this text changes, or ~7 days; README etc. don't matter)
+    # v2026-11-15  <- bump after editing R-setup.sh or the 3 config files (env cache only rebuilds when this text changes, or ~7 days; README etc. don't matter)
     set -euo pipefail
     curl -fsSL https://raw.githubusercontent.com/colin-ww/dotfiles/main/claude-code/cloud/R-setup.sh -o /tmp/R-setup.sh
     bash /tmp/R-setup.sh
