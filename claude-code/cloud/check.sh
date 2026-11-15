@@ -18,7 +18,7 @@ else echo "(shellcheck not installed, skipped)"; fi
 
 echo "== spelling (codespell: pip install codespell)"
 if command -v codespell >/dev/null; then
-  codespell . ../../.github || bad "codespell"
+  codespell --skip="*.csv" . ../../.github || bad "codespell"
 else echo "(codespell not installed, skipped)"; fi
 
 echo "== config files present"

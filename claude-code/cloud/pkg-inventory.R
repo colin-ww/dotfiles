@@ -1,51 +1,48 @@
-# Which R pkgs are installed, and why? One csv row per pkg, alphabetical.
-#   direct   = asked for (tidyverse + r-packages.txt), nothing else needs it
-#   indirect = only here because another asked-for pkg depends on it
-#   both     = asked for AND a dependency of another asked-for pkg (eg data.table)
-#   other    = neither (eg "recommended" pkgs that came with r-base, like MASS)
-# Base R pkgs are left out.
+# Which R pkgs does R-setup.sh install, and why? One csv row per pkg, alphabetical.
+#   tidy-direct = tidyverse + its core/extended pkgs (what tidyverse itself imports)
+#   oth-direct  = asked for in r-packages.txt, no other asked-for pkg needs it
+#   both        = asked for in r-packages.txt AND a dependency of another asked-for pkg (eg data.table)
+#   indirect    = only here because an asked-for pkg depends on it (any depth)
+# Computed from CRAN metadata (Depends/Imports/LinkingTo = what install.packages()
+# pulls in), so it doesn't matter what else happens to be installed. Base R left out.
+# CI regenerates + commits r-packages-installed.csv when r-packages.txt changes.
 #
-#   Rscript claude-code/cloud/pkg-inventory.R [out.csv]     (run after R-setup.sh)
+#   Rscript claude-code/cloud/pkg-inventory.R [out.csv]
 
 suppressMessages(library(tidyverse))
 
 here <- commandArgs() |> str_subset("^--file=") |> str_remove("^--file=") |> dirname()
-out <- commandArgs(trailingOnly = TRUE)[1] %||% "r-packages-installed.csv"
+out <- c(commandArgs(trailingOnly = TRUE), file.path(here, "r-packages-installed.csv"))[1]  # arg or default
 
-direct <- scan(file.path(here, "r-packages.txt"), what = "", comment.char = "#", quiet = TRUE) |>
-  c("tidyverse") |>
-  unique()
+db <- available.packages()
+deps_of <- \(pkgs, recursive = TRUE) {
+  tools::package_dependencies(pkgs, db = db, which = c("Depends", "Imports", "LinkingTo"),
+                              recursive = recursive)
+}
 
-installed <- installed.packages() |>
-  as_tibble() |>
-  distinct(Package, .keep_all = TRUE)  # same pkg in 2 libs: first .libPaths() wins
-
-# everything the direct pkgs pull in (Depends/Imports/LinkingTo, all levels),
-# not counting a pkg as its own dependency
-needed_by_direct <- tools::package_dependencies(
-  direct, db = as.matrix(installed), which = c("Depends", "Imports", "LinkingTo"), recursive = TRUE
-) |>
+listed <- scan(file.path(here, "r-packages.txt"), what = "", comment.char = "#", quiet = TRUE)
+tidy <- c("tidyverse", deps_of("tidyverse", recursive = FALSE)[[1]])
+asked <- union("tidyverse", listed)
+needed <- deps_of(asked) |>
   imap(\(deps, pkg) setdiff(deps, pkg)) |>
   list_c() |>
   unique()
 
-inventory <- installed |>
-  filter(is.na(Priority) | Priority != "base") |>
-  transmute(
-    package = Package,
-    version = Version,
-    how = case_when(
-      Package %in% direct & Package %in% needed_by_direct ~ "both",
-      Package %in% direct ~ "direct",
-      Package %in% needed_by_direct ~ "indirect",
-      .default = "other"
-    )
-  ) |>
+inventory <- tibble(package = union(asked, needed)) |>
+  filter(package %in% rownames(db)) |>  # drops base R (stats, utils, ...): not on CRAN
+  mutate(how = case_when(
+    package %in% tidy ~ "tidy-direct",
+    package %in% listed & package %in% needed ~ "both",
+    package %in% listed ~ "oth-direct",
+    .default = "indirect"
+  )) |>
   arrange(str_to_lower(package))
 
 write_csv(inventory, out)
 cat(nrow(inventory), "pkgs ->", out, "\n")
 print(count(inventory, how))
 
-not_installed <- setdiff(direct, inventory$package)
-if (length(not_installed)) cat("ASKED FOR BUT NOT INSTALLED:", not_installed, "\n")
+# DRY hint: listed pkgs that tidyverse brings anyway
+if (length(dup <- intersect(listed, tidy))) cat("In r-packages.txt but already in tidyverse:", dup, "\n")
+# after R-setup.sh, everything computed should be installed (an install failed if not)
+if (length(miss <- setdiff(inventory$package, rownames(installed.packages())))) cat("NOT INSTALLED:", miss, "\n")
