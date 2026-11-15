@@ -35,7 +35,7 @@ crayon,indirect
 credentials,indirect
 crew,oth-direct
 curl,indirect
-data.table,both
+data.table,indirect
 DBI,indirect
 dbplyr,tidy-direct
 desc,indirect
