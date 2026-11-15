@@ -5,6 +5,7 @@
 #   indirect    = only here because an asked-for pkg depends on it (any depth)
 # Computed from CRAN metadata (Depends/Imports/LinkingTo = what install.packages()
 # pulls in), so it doesn't matter what else happens to be installed. Base R left out.
+# Then loads every pkg: exits 1 if one isn't installed or doesn't load (missing system lib).
 # CI regenerates + commits r-packages-installed.csv when r-packages.txt changes.
 #
 #   Rscript claude-code/cloud/pkg-inventory.R [out.csv]
@@ -44,5 +45,17 @@ print(count(inventory, how))
 
 # DRY hint: listed pkgs that tidyverse brings anyway
 if (length(dup <- intersect(listed, tidy))) cat("In r-packages.txt but already in tidyverse:", dup, "\n")
-# after R-setup.sh, everything computed should be installed (an install failed if not)
-if (length(miss <- setdiff(inventory$package, rownames(installed.packages())))) cat("NOT INSTALLED:", miss, "\n")
+
+# After R-setup.sh, every pkg must be installed AND load. Loading is what
+# catches a missing system lib ("cannot open shared object file", eg igraph
+# without libglpk.so.40). Exit 1, so CI goes red.
+problems <- inventory |>
+  mutate(problem = map_chr(package, \(p) {
+    tryCatch({ suppressMessages(loadNamespace(p)); NA_character_ }, error = conditionMessage)
+  })) |>
+  filter(!is.na(problem))
+if (nrow(problems)) {
+  cat("\nNOT INSTALLED OR DOESN'T LOAD:\n", paste0(" - ", problems$package, ": ", problems$problem, "\n"))
+  quit(status = 1)
+}
+cat("All", nrow(inventory), "pkgs installed and load\n")

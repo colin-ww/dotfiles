@@ -8,7 +8,7 @@
 | `r-packages.txt` | extra R pkgs by category | you want a pkg preinstalled |
 | `user-claude.md` | becomes `~/.claude/CLAUDE.md` in every cloud session | Claude needs to know something about the env |
 | `R-setup.sh` | the code: reads the three files above | steps change (rare) |
-| `pkg-inventory.R` -> `r-packages-installed.csv` | every R pkg the setup installs: tidy-direct / oth-direct / both / indirect. CI regenerates + commits it | never by hand: edit `r-packages.txt` |
+| `pkg-inventory.R` -> `r-packages-installed.csv` | every R pkg the setup installs: tidy-direct / oth-direct / both / indirect. Also loads each one (fails on a missing system lib). CI regenerates + commits it | never by hand: edit `r-packages.txt` |
 | `check.sh` | tests (bash syntax, shellcheck, apt/CRAN names exist) | - |
 
 CI (`.github/workflows/cloud-setup.yml`) runs `check.sh`, then the whole

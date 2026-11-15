@@ -36,9 +36,7 @@ jobs:
       - name: Run R-setup.sh (config from this checkout, not main)
         timeout-minutes: 4  # cloud env caches only if setup < ~5 min
         run: sudo CFG_DIR="$PWD/claude-code/cloud" bash claude-code/cloud/R-setup.sh
-      - name: igraph loads (needs libglpk.so.40)
-        run: Rscript -e 'library(igraph); library(targets); library(crew); cat("ok\n")'
-      - name: "Package inventory csv (tidy-direct / oth-direct / both / indirect)"
+      - name: "Package inventory csv + every pkg installed and loads (catches missing system libs)"
         run: Rscript claude-code/cloud/pkg-inventory.R
       - name: Commit csv if it changed
         # pushes made with the built-in token don't trigger CI again (no loop)

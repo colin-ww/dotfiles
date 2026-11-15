@@ -26,5 +26,9 @@ libglpk-dev
 # odbc (libodbc.so.2; sc-nts-frame box::use()s odbc)
 unixodbc-dev
 
+# gert = git from R (usethis use_git()/pr_*(), pkgdown). Needs libgit2.so.1.7.
+# Found 2026-11-15 by pkg-inventory.R loading every pkg: gert didn't load.
+libgit2-dev
+
 # dev tools for editing the repos (check.sh uses both; apt versions are fine)
 codespell shellcheck
