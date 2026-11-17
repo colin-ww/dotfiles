@@ -25,12 +25,19 @@ pointblank assertthat checkmate
 
 # IO
 arrow duckdb nanoarrow nanoparquet
-qs2 openxlsx2 RSQLite odbc
+qs2 openxlsx2 writexl RSQLite odbc
+feather rio fastreg
+
+# clean data
+datacleanr
+codebook
+labelled
 
 # speed / parallel
-duckplyr collapse
+dtplyr duckplyr multidplyr
+data.table collapse kit
+futurize
 parallelly progressr
-# dtplyr data.table   # indirect: tidyverse brings dtplyr, dtplyr brings data.table
 
 # workflow
 config targets crew
@@ -42,4 +49,21 @@ zeallot wrapr rlist listr poorman
 fs ps
 
 # compare / desc
-waldo skimr janitor
+waldo skimr
+
+# tables
+janitor tabxplor summarytools
+tableone
+broom broom.helpers jstable
+epitab
+
+# plots
+ggformula
+
+# survey
+survey srvyr questionr
+
+# misc
+reticulate gseries epitools
+
+
