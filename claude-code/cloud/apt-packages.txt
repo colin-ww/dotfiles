@@ -32,3 +32,6 @@ libgit2-dev
 
 # dev tools for editing the repos (check.sh uses both; apt versions are fine)
 codespell shellcheck
+
+# summarytools
+libmagick++-dev
