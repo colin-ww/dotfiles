@@ -62,7 +62,7 @@ waldo skimr
 datadiff vdiffr
 
 # render
-quarto kable kableExtra
+quarto kableExtra
 pagedown
 bookdown
 gitdown
@@ -77,11 +77,16 @@ tinytable
 rtables
 sortable
 tidytable
+sjtable2df
 
 # plots
 ggformula gganimate ggrepel
 ggx
-cowplot plotly ggplotify
+cowplot
+plotly
+ggplotify
+wsjplot
+sjPlot
 
 # survey
 survey srvyr questionr
@@ -98,6 +103,9 @@ RCurl
 ellmer
 
 
+JWileymisc
+
+
 languageserver
 
 hablar
@@ -105,8 +113,6 @@ hablar
 thinkr
  
 NMdata
-SCRIP
-CodeAndRoll2
 
 zstd
 sloop
