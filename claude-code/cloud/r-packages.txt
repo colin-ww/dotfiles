@@ -10,9 +10,13 @@
 # odbc: the cloud VM can't reach StatCan DBs, but code loads odbc, so it must
 #   install. ROracle: not needed.
 
+# broom recipes parsnip workflows yardstick rsample infer ...
+tidymodels
+
 # dev
 devtools testthat lintr styler here
 spelling   # hunspell: spelling::spell_check_files("README.md")
+ProjectTemplate
 
 # timing / memory
 bench tictoc lobstr
@@ -22,25 +26,30 @@ box renv pak remotes pacman
 
 # check
 pointblank assertthat checkmate
+testit
 
 # IO
 arrow duckdb nanoarrow nanoparquet
 qs2 openxlsx2 writexl RSQLite odbc
-feather rio fastreg
+feather rio fastreg zoo
 
 # clean data
 datacleanr
 codebook
 labelled
+mosaicCore
 
 # speed / parallel
 dtplyr duckplyr multidplyr
 data.table collapse kit
-futurize
+fstcore tidyfst
+futurize furrr
 parallelly progressr
 
 # workflow
 config targets crew
+tarchetypes sqltargets
+workflowsets
 
 # syntax / lists
 zeallot wrapr rlist listr poorman
@@ -50,20 +59,63 @@ fs ps
 
 # compare / desc
 waldo skimr
+datadiff vdiffr
+
+# render
+quarto kable kableExtra
+pagedown
+bookdown
+gitdown
 
 # tables
 janitor tabxplor summarytools
-tableone
+tableone gt gtsummary
 broom broom.helpers jstable
-epitab
+formattable
+flextable
+tinytable
+rtables
+sortable
+tidytable
 
 # plots
-ggformula
+ggformula gganimate ggrepel
+ggx
+cowplot plotly ggplotify
 
 # survey
 survey srvyr questionr
 
+# epi
+epitools epitab Hmisc
+
+# manipulate
+reshape2 listenv plyr
+
 # misc
-reticulate gseries epitools
+reticulate gseries
+RCurl
+ellmer
+
+
+languageserver
+
+hablar
+
+thinkr
+ 
+NMdata
+SCRIP
+CodeAndRoll2
+
+zstd
+sloop
+mockery
+
+units
+
+slider
+
+hardhat
 
 
