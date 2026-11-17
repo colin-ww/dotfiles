@@ -1,11 +1,11 @@
 # claude-code/cloud
 
-## Layout: config separate from code
+## Folder layout: feeding R-setup.sh
 
 | File | What | Edit when |
 |---|---|---|
 | `apt-packages.txt` | system libs (+ why) | an R pkg says `cannot open shared object libXYZ.so` |
-| `r-packages.txt` | extra R pkgs by category | you want a pkg preinstalled |
+| `r-packages.txt` | extra R pkgs by category (extra to `tidyverse`) | you want a pkg preinstalled |
 | `user-claude.md` | becomes `~/.claude/CLAUDE.md` in every cloud session | Claude needs to know something about the env |
 | `R-setup.sh` | the code: reads the three files above | steps change (rare) |
 | `pkg-inventory.R` -> `r-packages-installed.csv` | every R pkg the setup installs: tidy-direct / oth-direct / both / indirect. Also loads each one (fails on a missing system lib). CI regenerates + commits it | never by hand: edit `r-packages.txt` |
