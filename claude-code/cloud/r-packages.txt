@@ -6,13 +6,18 @@
 # Covers sc-nts-frame + rr-tests, all branches (2026.11.07; re-check with
 #   Rscript claude-code/cloud/scan-repo-deps.R <repo dirs>).
 #   Can't: zonetools, RDCI (internal GitLab). Left out on purpose ("trying a
-#   pkg", not tests): tidytable, hablar, polars, tidypolars, tarchetypes.
-# odbc: the cloud VM can't reach StatCan DBs, but code loads odbc, so it must
-#   install. ROracle: not needed.
+#   pkg", not tests): polars, tidypolars.
+# odbc, ROracle: the cloud VM can't reach StatCan DBs, but code loads them, so
+#   they must install. ROracle = PPM binary, loads fine; connecting would also
+#   need Oracle Instant Client (see apt-packages.txt).
+
+# broom recipes parsnip workflows yardstick rsample infer ...
+tidymodels
 
 # dev
 devtools testthat lintr styler here
 spelling   # hunspell: spelling::spell_check_files("README.md")
+ProjectTemplate
 
 # timing / memory
 bench tictoc lobstr
@@ -22,18 +27,30 @@ box renv pak remotes pacman
 
 # check
 pointblank assertthat checkmate
+testit
 
 # IO
 arrow duckdb nanoarrow nanoparquet
-qs2 openxlsx2 RSQLite odbc
+qs2 openxlsx2 writexl RSQLite odbc ROracle
+feather rio fastreg zoo
+
+# clean data
+datacleanr
+codebook
+labelled
+mosaicCore
 
 # speed / parallel
-duckplyr collapse
+dtplyr duckplyr multidplyr
+data.table collapse kit
+fstcore tidyfst
+futurize furrr
 parallelly progressr
-# dtplyr data.table   # indirect: tidyverse brings dtplyr, dtplyr brings data.table
 
 # workflow
 config targets crew
+tarchetypes sqltargets
+workflowsets
 
 # syntax / lists
 zeallot wrapr rlist listr poorman
@@ -42,4 +59,59 @@ zeallot wrapr rlist listr poorman
 fs ps
 
 # compare / desc
-waldo skimr janitor
+waldo skimr
+datadiff vdiffr
+
+# render
+quarto kableExtra
+pagedown
+bookdown
+gitdown
+
+# tables
+janitor tabxplor summarytools
+tableone gt gtsummary
+broom broom.helpers jstable
+formattable
+flextable
+tinytable
+rtables
+sortable
+tidytable
+sjtable2df
+
+# plots
+ggformula gganimate ggrepel
+ggx
+cowplot
+plotly
+ggplotify
+wsjplot
+sjPlot
+
+# survey
+survey srvyr questionr
+
+# epi
+epitools epitab Hmisc
+
+# manipulate
+reshape2 listenv plyr
+
+# misc
+reticulate gseries
+RCurl
+ellmer
+JWileymisc
+languageserver
+hablar
+thinkr
+NMdata
+zstd
+sloop
+mockery
+units
+slider
+hardhat
+
+
