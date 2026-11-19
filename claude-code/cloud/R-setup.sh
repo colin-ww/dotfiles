@@ -45,6 +45,14 @@ echo "=== setup start: $(date) ==="
 
 export DEBIAN_FRONTEND=noninteractive  # stop apt from asking questions
 
+# Downloads retry + time out instead of hanging silently. 2026-11-17: CI sat
+# 4 min with zero output right after "Config dir" (curl/apt have no timeout by
+# default, apt -qq prints nothing while downloading) and got killed.
+CURL=(curl -fsSL --retry 3 --connect-timeout 20 --max-time 300)
+APT_NET=(-o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+# Elapsed time per step, so a slow/stuck step shows in the log.
+step() { echo "--- $* (${SECONDS}s)"; }
+
 # Ubuntu codename (docs say 24.04 = "noble"). Read it rather than hardcode,
 # so this keeps working if Anthropic upgrades the base image.
 . /etc/os-release
@@ -58,7 +66,7 @@ CFG_FILES="apt-packages.txt r-packages.txt user-claude.md"
 if [ -z "${CFG_DIR:-}" ]; then
   CFG_DIR="$(mktemp -d)"
   for f in $CFG_FILES; do
-    curl -fsSL "$CFG_BASE/$f" -o "$CFG_DIR/$f" || { echo "FAIL: download $f"; exit 1; }
+    "${CURL[@]}" "$CFG_BASE/$f" -o "$CFG_DIR/$f" || { echo "FAIL: download $f"; exit 1; }
   done
 fi
 echo "Config dir: $CFG_DIR"
@@ -76,7 +84,8 @@ warn() { echo "WARN: $*"; SOFT_FAILS=$((SOFT_FAILS + 1)); }
 # WATCH OUT: don't apt-install Ubuntu's r-cran-* packages alongside this.
 #      They're built for Ubuntu's older R and can clash with Posit packages.
 # ----------------------------------------------------------------------------
-curl -fsSL https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc \
+step "1: CRAN apt repo"
+"${CURL[@]}" https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc \
   > /etc/apt/trusted.gpg.d/cran_ubuntu_key.asc || { echo "FAIL: CRAN key"; exit 1; }
 echo "deb https://cloud.r-project.org/bin/linux/ubuntu ${CODENAME}-cran40/" \
   > /etc/apt/sources.list.d/cran-r.list
@@ -87,9 +96,10 @@ echo "deb https://cloud.r-project.org/bin/linux/ubuntu ${CODENAME}-cran40/" \
 # WATCH OUT: if a package later says "cannot open shared object libXYZ.so",
 #   a system lib is missing. Add its -dev package to apt-packages.txt.
 # ----------------------------------------------------------------------------
-apt-get update -qq || { echo "FAIL: apt update"; exit 1; }
+step "2: apt update + install"
+apt-get update -q "${APT_NET[@]}" || { echo "FAIL: apt update"; exit 1; }
 mapfile -t APT_PKGS < <(words "$CFG_DIR/apt-packages.txt")
-apt-get install -y -qq --no-install-recommends "${APT_PKGS[@]}" \
+apt-get install -y -q --no-install-recommends "${APT_NET[@]}" "${APT_PKGS[@]}" \
   || { echo "FAIL: R install"; exit 1; }
 
 # ----------------------------------------------------------------------------
@@ -126,6 +136,7 @@ echo 'LANG=${LANG-C.UTF-8}' >> "$(R RHOME)/etc/Renviron.site"
 # files), lubridate, stringr, forcats, ggplot2, DBI (via dbplyr), etc.
 # Hard requirement: if it fails, stop.
 # ----------------------------------------------------------------------------
+step "4a: tidyverse"
 Rscript -e 'install.packages("tidyverse")' || { echo "FAIL: tidyverse"; exit 1; }
 
 # ----------------------------------------------------------------------------
@@ -134,6 +145,7 @@ Rscript -e 'install.packages("tidyverse")' || { echo "FAIL: tidyverse"; exit 1; 
 # Biggest downloads: arrow, duckdb. Drop them if runtime creeps toward 5 min.
 # List + notes on what is covered/left out: r-packages.txt
 # ----------------------------------------------------------------------------
+step "4b: extra R pkgs"
 Rscript -e '
 pkgs <- scan(commandArgs(TRUE)[1], what = "", comment.char = "#", quiet = TRUE)
 install.packages(pkgs)
@@ -150,11 +162,12 @@ if (length(missing)) { message("EXTRAS FAILED: ", paste(missing, collapse = ", "
 #   every session) and prints a notice on every connect. With it, R and the
 #   CLI share one home (same version -> same extensions).
 # ----------------------------------------------------------------------------
+step "4c: duckdb CLI"
 mkdir -p ~/.duckdb
 DUCKDB_V="$(Rscript -e 'con <- DBI::dbConnect(duckdb::duckdb()); cat(DBI::dbGetQuery(con, "select version() v")$v); DBI::dbDisconnect(con)' 2>/dev/null)"
 case "$(uname -m)" in aarch64|arm64) DUCKDB_ARCH=arm64 ;; *) DUCKDB_ARCH=amd64 ;; esac
 { [ -n "$DUCKDB_V" ] \
-  && curl -fsSL "https://install.duckdb.org/${DUCKDB_V}/duckdb-cli-linux-${DUCKDB_ARCH}.tar.gz" \
+  && "${CURL[@]}" "https://install.duckdb.org/${DUCKDB_V}/duckdb-cli-linux-${DUCKDB_ARCH}.tar.gz" \
      | tar -xzf - -C /usr/local/bin duckdb \
   && [ "$(duckdb --version | grep -oE '^v[0-9.]+')" = "$DUCKDB_V" ] \
   && echo "duckdb CLI $DUCKDB_V OK"; } \

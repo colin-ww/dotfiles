@@ -6,9 +6,10 @@
 # Covers sc-nts-frame + rr-tests, all branches (2026.11.07; re-check with
 #   Rscript claude-code/cloud/scan-repo-deps.R <repo dirs>).
 #   Can't: zonetools, RDCI (internal GitLab). Left out on purpose ("trying a
-#   pkg", not tests): tidytable, hablar, polars, tidypolars, tarchetypes.
-# odbc: the cloud VM can't reach StatCan DBs, but code loads odbc, so it must
-#   install. ROracle: not needed.
+#   pkg", not tests): polars, tidypolars.
+# odbc, ROracle: the cloud VM can't reach StatCan DBs, but code loads them, so
+#   they must install. ROracle = PPM binary, loads fine; connecting would also
+#   need Oracle Instant Client (see apt-packages.txt).
 
 # broom recipes parsnip workflows yardstick rsample infer ...
 tidymodels
@@ -30,7 +31,7 @@ testit
 
 # IO
 arrow duckdb nanoarrow nanoparquet
-qs2 openxlsx2 writexl RSQLite odbc
+qs2 openxlsx2 writexl RSQLite odbc ROracle
 feather rio fastreg zoo
 
 # clean data
@@ -101,27 +102,16 @@ reshape2 listenv plyr
 reticulate gseries
 RCurl
 ellmer
-
-
 JWileymisc
-
-
 languageserver
-
 hablar
-
 thinkr
- 
 NMdata
-
 zstd
 sloop
 mockery
-
 units
-
 slider
-
 hardhat
 
 
