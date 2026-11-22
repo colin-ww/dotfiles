@@ -11,8 +11,16 @@
 #   they must install. ROracle = PPM binary, loads fine; connecting would also
 #   need Oracle Instant Client (see apt-packages.txt).
 
+# soon, non CRAN:
+# polars, tidypolars
+# tidyverse/ggbot2
+# colin-ww/banff
+
 # broom recipes parsnip workflows yardstick rsample infer ...
 tidymodels
+
+# easystats
+easystats
 
 # dev
 devtools testthat lintr styler here
@@ -102,16 +110,27 @@ reshape2 listenv plyr
 reticulate gseries
 RCurl
 ellmer
+
+
 JWileymisc
+
+
 languageserver
+
 hablar
+
 thinkr
+
 NMdata
+
 zstd
 sloop
 mockery
+
 units
+
 slider
+
 hardhat
 
 
