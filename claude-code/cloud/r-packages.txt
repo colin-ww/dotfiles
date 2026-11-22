@@ -1,7 +1,9 @@
 # R packages for R-setup.sh, installed after tidyverse (which is hard-coded).
+
 # Whitespace-separated, "#" starts a comment. Soft fail: a failed pkg is
 # logged, the session still starts. Checked in CI (check.sh): each name must
 # be on CRAN (Posit Package Manager).
+
 # Biggest downloads: arrow, duckdb. Drop them if runtime creeps toward 5 min.
 # Covers sc-nts-frame + rr-tests, all branches (2026.11.07; re-check with
 #   Rscript claude-code/cloud/scan-repo-deps.R <repo dirs>).
@@ -11,10 +13,11 @@
 #   they must install. ROracle = PPM binary, loads fine; connecting would also
 #   need Oracle Instant Client (see apt-packages.txt).
 
-# soon, non CRAN:
+## soon, non CRAN:
 # polars, tidypolars
 # tidyverse/ggbot2
 # colin-ww/banff
+# surveyanalysis (once cran)
 
 # broom recipes parsnip workflows yardstick rsample infer ...
 tidymodels
@@ -28,7 +31,7 @@ spelling   # hunspell: spelling::spell_check_files("README.md")
 ProjectTemplate
 
 # timing / memory
-bench tictoc lobstr
+bench tictoc lobstr microbenchmark
 
 # pkgs
 box renv pak remotes pacman
@@ -39,7 +42,7 @@ testit
 
 # IO
 arrow duckdb nanoarrow nanoparquet
-qs2 openxlsx2 writexl RSQLite odbc ROracle
+qs2 openxlsx2 writexl RSQLite odbc ROracle RODBC
 feather rio fastreg zoo
 
 # clean data
@@ -79,6 +82,7 @@ gitdown
 # tables
 janitor tabxplor summarytools
 tableone gt gtsummary
+arsenal
 broom broom.helpers jstable
 formattable
 flextable
@@ -90,7 +94,7 @@ sjtable2df
 
 # plots
 ggformula gganimate ggrepel
-ggx
+ggx egg
 cowplot
 plotly
 ggplotify
@@ -99,6 +103,7 @@ sjPlot
 
 # survey
 survey srvyr questionr
+tidycensus
 
 # epi
 epitools epitab Hmisc
@@ -132,5 +137,29 @@ units
 slider
 
 hardhat
+
+sqldf
+goodpractice
+
+quanteda
+
+tidypredict
+
+gitlabr
+lozen
+
+logger
+futile.logger
+tidylog
+
+gittargets
+
+cmdfun
+argparse
+arg
+argparser
+optparse
+getopt
+
 
 
