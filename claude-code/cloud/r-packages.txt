@@ -27,6 +27,7 @@ easystats
 
 # dev
 devtools testthat lintr styler here
+covr
 spelling   # hunspell: spelling::spell_check_files("README.md")
 ProjectTemplate rcmdcheck
 
@@ -46,9 +47,15 @@ testit
 arrow duckdb nanoarrow nanoparquet
 qs2 openxlsx2 writexl RSQLite odbc ROracle RODBC
 feather rio fastreg zoo
+pdftools
 
 # clean data
 datacleanr
+datawizard
+gdata
+naniar
+
+simputation
 codebook
 labelled
 mosaicCore
@@ -62,7 +69,7 @@ parallelly progressr
 
 # workflow
 config targets crew
-tarchetypes sqltargets
+tarchetypes sqltargets gittargets
 workflowsets
 
 # syntax / lists
@@ -118,6 +125,7 @@ reshape2 listenv plyr
 reticulate gseries
 RCurl
 ellmer
+rex
 
 
 JWileymisc
@@ -146,13 +154,13 @@ goodpractice
 
 quanteda
 
+lazyeval
+
 tidypredict
 
 logger
 futile.logger
 tidylog
-
-gittargets
 
 cmdfun
 argparse
@@ -161,5 +169,8 @@ argparser
 optparse
 getopt
 
+gtools
+
+diffobj
 
 
