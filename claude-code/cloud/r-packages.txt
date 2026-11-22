@@ -28,7 +28,9 @@ easystats
 # dev
 devtools testthat lintr styler here
 spelling   # hunspell: spelling::spell_check_files("README.md")
-ProjectTemplate
+ProjectTemplate rcmdcheck
+
+git2r gh gitlabr lozen
 
 # timing / memory
 bench tictoc lobstr microbenchmark
@@ -93,11 +95,12 @@ tidytable
 sjtable2df
 
 # plots
-ggformula gganimate ggrepel
+ggformula ggrepel  # gganimate - lots deps/sys libs
 ggx egg
 cowplot
 plotly
 ggplotify
+ggfortify
 wsjplot
 sjPlot
 
@@ -144,9 +147,6 @@ goodpractice
 quanteda
 
 tidypredict
-
-gitlabr
-lozen
 
 logger
 futile.logger
