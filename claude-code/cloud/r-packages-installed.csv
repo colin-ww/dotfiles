@@ -442,6 +442,7 @@ viridisLite,indirect
 vroom,indirect
 waldo,both
 warp,indirect
+watcher,indirect
 websocket,indirect
 whisker,indirect
 withr,indirect
