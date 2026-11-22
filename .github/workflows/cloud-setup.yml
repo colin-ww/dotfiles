@@ -33,6 +33,13 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.head_ref || github.ref_name }}  # the branch, not PR merge commit, so we can push
+      - name: Use the cloud env's apt mirror (archive.ubuntu.com), not the runner's
+        # 2026-11-19: runner's us-east-2.ec2.archive.ubuntu.com crawled at ~50 KB/s,
+        # setup timed out mid-download (92 of 232 debs). Cloud env uses archive.ubuntu.com,
+        # so this also makes the 4-min timing closer to the real thing.
+        run: |
+          echo "http://archive.ubuntu.com/ubuntu/" | sudo tee /etc/apt/apt-mirrors.txt
+          grep -rhE "^(URIs|deb )" /etc/apt/sources.list.d/ /etc/apt/sources.list 2>/dev/null || true
       - name: Run R-setup.sh (config from this checkout, not main)
         timeout-minutes: 4  # cloud env caches only if setup < ~5 min
         run: sudo CFG_DIR="$PWD/claude-code/cloud" STRICT=1 bash claude-code/cloud/R-setup.sh  # STRICT: any WARN = red
