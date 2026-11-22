@@ -36,13 +36,14 @@ codespell shellcheck
 # magick (-> summarytools, datacleanr)
 libmagick++-dev
 
-# units (listed) + sf (gganimate -> transformr -> sf). Found 2026-11-19 by
-# pkg-inventory.R: units.so wants libudunits2.so.0, sf.so wants GDAL/GEOS/PROJ.
-# ~83 apt pkgs / 54 MB, ~10 s. Drop gganimate + these 3 if setup gets slow.
+# units
 libudunits2-dev
-libgdal-dev libgeos-dev libproj-dev
+
+# sf (gganimate -> transformr -> sf)
+# ~83 apt pkgs / 54 MB, ~10 s. Drop gganimate + these if setup slow
+# libgdal-dev libgeos-dev libproj-dev
 
 # ROracle: Oracle Instant Client needs libaio (noble renamed it libaio1t64).
 # NOTE: ROracle loads without Instant Client, but dbDriver("Oracle") needs
 # libclntsh.so from Instant Client (not installed; no StatCan DB here anyway).
-libaio1t64
+# libaio1t64
