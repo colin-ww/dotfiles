@@ -126,7 +126,10 @@ sjPlot
 
 # survey
 survey srvyr questionr
-tidycensus
+# Both need sf -> GDAL/GEOS/PROJ sys libs (commented out in apt-packages.txt).
+# tidycensus = US Census Bureau; cancensus = StatCan census (CensusMapper API).
+# tidycensus
+# cancensus
 
 # epi
 epitools epitab Hmisc
