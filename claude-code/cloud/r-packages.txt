@@ -19,44 +19,41 @@
 # colin-ww/banff
 # surveyanalysis (once cran)
 
-# broom recipes parsnip workflows yardstick rsample infer ...
+# TIDYMODELS - broom recipes parsnip workflows yardstick rsample infer ...
 tidymodels
 
-# easystats
+# EASYSTATS
 easystats
 
 # dev
-devtools testthat lintr styler here
-covr
-spelling   # hunspell: spelling::spell_check_files("README.md")
-ProjectTemplate rcmdcheck
-
+devtools rcmdcheck 
+covr testthat testit
+usethis here ProjectTemplate 
 git2r gh gitlabr lozen
+lintr styler
+spelling   # hunspell: spelling::spell_check_files("README.md")
 
 # timing / memory
-bench tictoc lobstr microbenchmark
+lobstr bench tictoc microbenchmark
 
 # pkgs
 box renv pak remotes pacman
 
 # check
 pointblank assertthat checkmate
-testit
 
 # IO
 arrow duckdb nanoarrow nanoparquet
-qs2 openxlsx2 writexl RSQLite odbc ROracle RODBC
-feather rio fastreg zoo
+qs2 feather
+rio fastreg zoo
+RSQLite odbc ROracle RODBC
+openxlsx2 writexl
 pdftools
 
 # clean data
-datacleanr
-datawizard
-gdata
-naniar
-
+datacleanr datawizard gdata naniar
 simputation
-codebook
+codebok
 labelled
 mosaicCore
 
@@ -68,9 +65,10 @@ futurize furrr
 parallelly progressr
 
 # workflow
-config targets crew
+config
+targets crew
 tarchetypes sqltargets gittargets
-workflowsets
+workflows workflowsets
 
 # syntax / lists
 zeallot wrapr rlist listr poorman
@@ -84,14 +82,13 @@ datadiff vdiffr
 
 # render
 quarto kableExtra
-pagedown
-bookdown
-gitdown
+pagedown bookdown gitdown
 
-# tables
-janitor tabxplor summarytools
-tableone gt gtsummary
-arsenal
+# table
+janitor
+tabxplor arsenal
+summarytools tableone
+gt gtsummary
 broom broom.helpers jstable
 formattable
 flextable
@@ -101,8 +98,9 @@ sortable
 tidytable
 sjtable2df
 
-# plots
-ggformula ggrepel  # gganimate - lots deps/sys libs
+# plot
+#gganimate - lots deps/sys libs
+ggformula ggrepel
 ggx egg
 cowplot
 plotly
@@ -118,7 +116,7 @@ tidycensus
 # epi
 epitools epitab Hmisc
 
-# manipulate
+# wrangle
 reshape2 listenv plyr
 
 # misc
