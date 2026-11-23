@@ -158,10 +158,6 @@ lazyeval
 
 tidypredict
 
-logger
-futile.logger
-tidylog
-
 cmdfun
 argparse
 arg
