@@ -29,17 +29,20 @@ easystats
 
 # dev
 devtools rcmdcheck 
-covr testthat testit
-usethis here ProjectTemplate 
-git2r gh gitlabr lozen
+covr testthat testdown
+usethis here rprojroot ProjectTemplate 
+git2r gh gitlabr lozen gitdown
 lintr styler
 spelling   # hunspell: spelling::spell_check_files("README.md")
 
 # timing / memory
-lobstr bench tictoc microbenchmark
+bench tictoc microbenchmark
+lobstr memuse
 
 # pkgs
-box renv pak remotes pacman
+pacman pak remotes 
+renv devindocker
+box
 
 # check
 pointblank assertthat checkmate
@@ -73,7 +76,9 @@ tarchetypes sqltargets gittargets
 workflows workflowsets
 
 # syntax / lists
-zeallot wrapr rlist listr poorman
+zeallot wrapr arpr
+rlist listr
+poorman
 
 # files / processes
 fs ps
@@ -84,7 +89,7 @@ datadiff vdiffr
 
 # render
 quarto kableExtra
-pagedown bookdown gitdown
+pagedown bookdown
 
 # table
 janitor
@@ -174,5 +179,7 @@ logging
 gtools
 
 diffobj
+
+useful
 
 
