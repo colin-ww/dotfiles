@@ -19,6 +19,8 @@
 # colin-ww/banff
 # surveyanalysis (once cran)
 
+tidylog    # print out what dplyr fcts did, SAS-style, esp useful for joins? eg tidylog::left_join()
+
 # TIDYMODELS - broom recipes parsnip workflows yardstick rsample infer ...
 tidymodels
 
@@ -169,7 +171,6 @@ getopt
 
 logger
 futile.logger
-tidylog
 lgr
 log4r
 logging
