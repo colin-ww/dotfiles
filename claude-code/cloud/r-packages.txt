@@ -28,12 +28,14 @@ tidymodels
 easystats
 
 # dev
-devtools rcmdcheck 
-covr testthat testdown
+devtools fusen rcmdcheck checkhelper
+covr covrpage testthat testdown
 usethis here rprojroot ProjectTemplate 
 git2r gh gitlabr lozen gitdown
 lintr styler
 spelling   # hunspell: spelling::spell_check_files("README.md")
+fcuk
+remedy
 
 # timing / memory
 bench tictoc microbenchmark
@@ -42,10 +44,12 @@ lobstr memuse
 # pkgs
 pacman pak remotes 
 renv devindocker
+attachment  # DESCRIPTION file, etc?
 box
 
 # check
 pointblank assertthat checkmate
+emo
 
 # IO
 arrow duckdb nanoarrow nanoparquet
@@ -90,6 +94,7 @@ datadiff vdiffr
 # render
 quarto kableExtra
 pagedown bookdown
+lightparser
 
 # table
 janitor
