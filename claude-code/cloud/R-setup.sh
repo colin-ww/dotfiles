@@ -174,6 +174,30 @@ case "$(uname -m)" in aarch64|arm64) DUCKDB_ARCH=arm64 ;; *) DUCKDB_ARCH=amd64 ;
   || warn "duckdb CLI install failed (wanted ${DUCKDB_V:-?}, same as R duckdb engine)"
 
 # ----------------------------------------------------------------------------
+# STEP 4d: Oracle Instant Client (Basic Lite)  (~8 s, 76 MB download, 171 MB
+# on disk). Soft fail. OFF for now: uncomment the block below AND libaio1t64
+# in apt-packages.txt to turn it on.
+# WHY: ROracle loads without it, but dbDriver("Oracle")/dbConnect() need
+#   libclntsh.so. StatCan DBs aren't reachable from here either way; with it,
+#   ROracle code fails at connect (ORA-12262), not at driver load.
+#   Tested 2026-11-22: dbDriver("Oracle") OK, connect -> ORA-12262 (expected).
+# WATCH OUT: noble renamed libaio.so.1 -> libaio.so.1t64, so symlink the old
+#   name. URL = Oracle's unpinned "latest" (no login), x64 only (ARM: -arm64).
+# ----------------------------------------------------------------------------
+# step "4d: Oracle Instant Client"
+# OIC_ZIP="$(mktemp --suffix=.zip)"
+# { "${CURL[@]}" -o "$OIC_ZIP" \
+#     https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip \
+#   && mkdir -p /opt/oracle && unzip -qo "$OIC_ZIP" -d /opt/oracle \
+#   && OIC_DIR="$(ls -d /opt/oracle/instantclient_* | sort -V | tail -1)" \
+#   && ln -sf /usr/lib/x86_64-linux-gnu/libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1 \
+#   && echo "$OIC_DIR" > /etc/ld.so.conf.d/oracle-instantclient.conf && ldconfig \
+#   && Rscript -e 'invisible(ROracle::Oracle())' \
+#   && echo "Oracle Instant Client OK ($OIC_DIR)"; } \
+#   || warn "Oracle Instant Client install failed"
+# rm -f "$OIC_ZIP"
+
+# ----------------------------------------------------------------------------
 # STEP 5: Tell Claude what's set up  (instant)
 # ~/.claude/CLAUDE.md is loaded as personal instructions in EVERY cloud
 # session, whatever repo. Stops Claude reinstalling R or compiling things.
