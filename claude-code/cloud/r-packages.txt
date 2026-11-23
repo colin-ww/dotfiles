@@ -15,9 +15,13 @@
 
 ## soon, non CRAN:
 # polars, tidypolars
+# covrpage testdown
+# lozen
+# devindocker
+# emo
 # tidyverse/ggbot2
 # colin-ww/banff
-# surveyanalysis (once cran)
+# surveyanalysis (once on cran)
 
 tidylog    # print out what dplyr fcts did, SAS-style, esp useful for joins? eg tidylog::left_join()
 
@@ -29,9 +33,9 @@ easystats
 
 # dev
 devtools fusen rcmdcheck checkhelper
-covr covrpage testthat testdown
+covr testthat
 usethis here rprojroot ProjectTemplate 
-git2r gh gitlabr lozen gitdown
+git2r gh gitlabr gitdown
 lintr styler
 spelling   # hunspell: spelling::spell_check_files("README.md")
 fcuk
@@ -43,13 +47,12 @@ lobstr memuse
 
 # pkgs
 pacman pak remotes 
-renv devindocker
+renv
 attachment  # DESCRIPTION file, etc?
 box
 
 # check
 pointblank assertthat checkmate
-emo
 
 # IO
 arrow duckdb nanoarrow nanoparquet
@@ -62,7 +65,7 @@ pdftools
 # clean data
 datacleanr datawizard gdata naniar
 simputation
-codebok
+codebook
 labelled
 mosaicCore
 
