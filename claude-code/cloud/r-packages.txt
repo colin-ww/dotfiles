@@ -167,6 +167,13 @@ argparser
 optparse
 getopt
 
+logger
+futile.logger
+tidylog
+lgr
+log4r
+logging
+
 gtools
 
 diffobj
