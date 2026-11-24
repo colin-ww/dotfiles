@@ -154,6 +154,18 @@ if (length(missing)) { message("EXTRAS FAILED: ", paste(missing, collapse = ", "
 ' "$CFG_DIR/r-packages.txt" || warn "extra R pkgs failed to install (EXTRAS FAILED above)"
 
 # ----------------------------------------------------------------------------
+# STEP 4b2: Upgrade anything already installed but older than CRAN. Soft fail.
+# WHY: install.packages() installs MISSING deps but never upgrades an old one,
+#   even when a new pkg needs a newer version (">= x.y") -> that pkg won't load.
+#   Fresh build: only R's bundled "recommended" pkgs (Matrix, MASS, cluster...,
+#   from the r-recommended deb, can lag CRAN), a few seconds. Re-running setup
+#   in an old container: also stale deps (2026-11-23: shiny 1.14 stayed while
+#   CRAN shiny 1.15 had added a new dep, watcher).
+# ----------------------------------------------------------------------------
+step "4b2: update.packages"
+Rscript -e 'update.packages(ask = FALSE, checkBuilt = TRUE)' || warn "update.packages failed"
+
+# ----------------------------------------------------------------------------
 # STEP 4c: duckdb CLI  (~5 s, 24 MB). Soft fail.
 # Same DuckDB version as the engine inside the R duckdb pkg, so a .duckdb file
 # written by one opens in the other. Not in Ubuntu's apt: official download

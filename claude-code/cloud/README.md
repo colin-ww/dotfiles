@@ -32,6 +32,27 @@ holds only this bootstrap, which downloads + runs R-setup.sh from main:
 
 Workflow: edit (branch) -> CI green -> merge to main -> bump the date line in the env field.
 
+## Ideas, not done (yet)
+
+- **If the cloud env breaks while CI is green: run CI in a bare `ubuntu:24.04`
+  container.** CI's runner image and the cloud image are both noble, but each
+  has its own pile of preinstalled debs. A system lib that's preinstalled on the
+  runner but NOT in the cloud image (and not in `apt-packages.txt`) passes CI and
+  breaks the cloud env. A bare container has almost nothing, so any lib we rely on
+  without listing it turns CI red. Cost: more debs to install (slower), and a
+  bootstrap for `curl` + `ca-certificates` before `R-setup.sh`. In the workflow:
+  `full-run:` -> `container: ubuntu:24.04`, drop `sudo`.
+- **Weekly scheduled CI run** (`on: schedule: - cron: ...`). CI only runs when
+  this folder changes, but CRAN changes daily and the cloud env rebuilds ~weekly
+  on whatever CRAN has then. A scheduled run catches a breaking CRAN release
+  before a cloud build does.
+- **pak instead of install.packages(): tested 2026-11-23, slower here.** Full list
+  into an empty library, cold cache, in a cloud session: install.packages()
+  1m17, `pak::pkg_install()` 1m51 (2m09 with pak's own sysreqs apt step on).
+  pak also leaves a ~600 MB download cache (would need `pak::cache_clean()`).
+  Its plus: upgrades deps when a pkg needs a newer version. `update.packages()`
+  (step 4b2) covers that for us.
+
 ## scan-repo-deps.R
 
 What do my repos use (all branches) that the env doesn't install? Run in a
