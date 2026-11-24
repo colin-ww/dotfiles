@@ -213,6 +213,27 @@ case "$(uname -m)" in aarch64|arm64) DUCKDB_ARCH=arm64 ;; *) DUCKDB_ARCH=amd64 ;
 # rm -f "$OIC_ZIP"
 
 # ----------------------------------------------------------------------------
+# STEP 4e: quarto CLI  (~15 s, 141 MB .deb, 420 MB in /opt/quarto). Soft fail.
+# WHY: the quarto R pkg (r-packages.txt) is only a wrapper: quarto_render()
+#   and `quarto render` need the CLI. Not in apt: official .deb, latest stable
+#   per quarto.org's download manifest (the one its download page uses).
+#   Bundles its own pandoc, deno, typst, dart-sass. jq: apt-packages.txt.
+# Tested 2026-11-24: 1.11.9; a .qmd with an R chunk (dplyr) renders to html.
+# ----------------------------------------------------------------------------
+step "4e: quarto CLI"
+QUARTO_DEB="$(mktemp --suffix=.deb)"
+chmod 644 "$QUARTO_DEB"  # apt reads it as user _apt
+{ QUARTO_URL="$("${CURL[@]}" https://quarto.org/docs/download/_download.json \
+    | jq -r --arg a "$(dpkg --print-architecture)" \
+        '.assets[] | select(.name | endswith("linux-" + $a + ".deb")) | .download_url')" \
+  && [ -n "$QUARTO_URL" ] \
+  && "${CURL[@]}" -o "$QUARTO_DEB" "$QUARTO_URL" \
+  && apt-get install -y -q --no-install-recommends "${APT_NET[@]}" "$QUARTO_DEB" \
+  && echo "quarto CLI $(quarto --version) OK"; } \
+  || warn "quarto CLI install failed"
+rm -f "$QUARTO_DEB"
+
+# ----------------------------------------------------------------------------
 # STEP 5: Tell Claude what's set up  (instant)
 # ~/.claude/CLAUDE.md is loaded as personal instructions in EVERY cloud
 # session, whatever repo. Stops Claude reinstalling R or compiling things.

@@ -52,6 +52,15 @@ Workflow: edit (branch) -> CI green -> merge to main -> bump the date line in th
   pak also leaves a ~600 MB download cache (would need `pak::cache_clean()`).
   Its plus: upgrades deps when a pkg needs a newer version. `update.packages()`
   (step 3b) covers that for us.
+- **pak as a fallback only, for pkgs that don't load.** After step 4b, try
+  `loadNamespace()` on each pkg in `r-packages.txt`; for any that fails, run
+  `pak::pkg_install(p, upgrade = TRUE)` as root with sysreqs ON. pak then
+  apt-installs the system libs it knows the pkg needs, and upgrades deps that
+  are too old. Then `warn` (STRICT turns CI red, so gaps still get fixed in
+  `apt-packages.txt`), but cloud sessions heal themselves meanwhile. Cost:
+  ~10 s per build for the load loop, even when nothing is broken. Mostly
+  covered already: check.sh's sysreqs check (missing libs, before setup) +
+  step 3b (old deps). Worth it if a cloud build ever breaks between CI runs.
 
 ## scan-repo-deps.R
 

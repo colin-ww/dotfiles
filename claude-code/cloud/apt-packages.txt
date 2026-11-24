@@ -35,6 +35,7 @@ libgit2-dev
 
 # dev tools for editing the repos (check.sh uses both; apt versions are fine)
 codespell shellcheck
+jq   # check.sh (sysreqs API) + R-setup.sh step 4e (quarto manifest). On both images anyway
 
 # magick (-> summarytools, datacleanr)
 libmagick++-dev
@@ -59,7 +60,7 @@ libpoppler-cpp-dev
 # pandoc: rmarkdown, knitr, bookdown, pagedown, reprex render with it (pkgs
 # load fine without it, so the load test can't catch it missing). Already on
 # the cloud image (2026-11-24); listed so it can't silently vanish.
-# NOT covered: the quarto R pkg needs the separate quarto CLI (not in apt).
+# The quarto R pkg needs the separate quarto CLI: not in apt, R-setup.sh step 4e.
 pandoc
 
 # --- Skipped on purpose. check.sh (Posit sysreqs) says some R pkg wants these.
