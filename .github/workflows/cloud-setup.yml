@@ -32,6 +32,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
+      - &mirror  # reused in full-run. check.sh runs apt-get update too
+        name: Use the cloud env's apt mirror (archive.ubuntu.com), not the runner's
+        # 2026-11-19: runner's us-east-2.ec2.archive.ubuntu.com crawled at ~50 KB/s,
+        # setup timed out mid-download (92 of 232 debs). 2026-11-24: check.sh's
+        # apt-get update took 2 min on it. Cloud env uses archive.ubuntu.com,
+        # so this also makes the 4-min timing closer to the real thing.
+        run: |
+          echo "http://archive.ubuntu.com/ubuntu/" | sudo tee /etc/apt/apt-mirrors.txt
+          grep -rhE "^(URIs|deb )" /etc/apt/sources.list.d/ /etc/apt/sources.list 2>/dev/null || true
       - run: pip install codespell  # spell check, used by check.sh
       - run: bash claude-code/cloud/check.sh
 
@@ -50,13 +59,7 @@ jobs:
       - name: "Release: which Ubuntu is this runner?"
         # (runner has no R before setup: checked 2026-11-24, image 20261116)
         run: . /etc/os-release; echo "$PRETTY_NAME ($VERSION_CODENAME), image ${ImageVersion:-?}"
-      - name: Use the cloud env's apt mirror (archive.ubuntu.com), not the runner's
-        # 2026-11-19: runner's us-east-2.ec2.archive.ubuntu.com crawled at ~50 KB/s,
-        # setup timed out mid-download (92 of 232 debs). Cloud env uses archive.ubuntu.com,
-        # so this also makes the 4-min timing closer to the real thing.
-        run: |
-          echo "http://archive.ubuntu.com/ubuntu/" | sudo tee /etc/apt/apt-mirrors.txt
-          grep -rhE "^(URIs|deb )" /etc/apt/sources.list.d/ /etc/apt/sources.list 2>/dev/null || true
+      - *mirror  # see check
       - name: Run R-setup.sh (config from this checkout, not main)
         timeout-minutes: 4  # cloud env caches only if setup < ~5 min
         run: sudo CFG_DIR="$PWD/claude-code/cloud" STRICT=1 bash claude-code/cloud/R-setup.sh  # STRICT: any WARN = red
