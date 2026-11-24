@@ -12,7 +12,7 @@
 | `check.sh` | tests, no R needed: bash syntax, shellcheck, apt/CRAN names exist, every system lib Posit says our R pkgs need is in `apt-packages.txt` (or on a `# skip:` line) | - |
 
 CI (`.github/workflows/cloud-setup.yml`) runs `check.sh`, then the whole
-`R-setup.sh` on an `ubuntu-latest` runner with `STRICT=1` (any `WARN:` = red; in
+`R-setup.sh` on 2 runners, `ubuntu-24.04` (= the cloud's noble) and `ubuntu-latest` (26.04 today), with `STRICT=1` (any `WARN:` = red; in
 sessions they're soft so one flaky pkg doesn't cost you R), then loads every R pkg.
 Run the quick part locally (as root or with sudo): `bash claude-code/cloud/check.sh`.
 
