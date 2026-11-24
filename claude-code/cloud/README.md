@@ -51,7 +51,7 @@ Workflow: edit (branch) -> CI green -> merge to main -> bump the date line in th
   1m17, `pak::pkg_install()` 1m51 (2m09 with pak's own sysreqs apt step on).
   pak also leaves a ~600 MB download cache (would need `pak::cache_clean()`).
   Its plus: upgrades deps when a pkg needs a newer version. `update.packages()`
-  (step 4b2) covers that for us.
+  (step 3b) covers that for us.
 
 ## scan-repo-deps.R
 

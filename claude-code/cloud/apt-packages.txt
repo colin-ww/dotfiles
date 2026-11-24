@@ -53,6 +53,6 @@ libpoppler-cpp-dev
 # Uncomment together with step 4d.
 # libaio1t64
 
-# unzip: R-setup.sh step 4d (Instant Client .zip). Tiny, kept on even while
-# 4d is off; usually already on the image.
-unzip
+# unzip: R-setup.sh step 4d (Instant Client .zip). Usually already on the
+# image. Uncomment together with step 4d.
+# unzip

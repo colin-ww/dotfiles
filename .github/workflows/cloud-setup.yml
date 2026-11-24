@@ -17,6 +17,9 @@ on:
 
 jobs:
   check:
+    # = the cloud env's Ubuntu (noble). NOT ubuntu-latest: that moves to a new
+    # release on GitHub's schedule, not Anthropic's. When the cloud env moves,
+    # bump both runs-on + "noble" in check.sh.
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
@@ -25,7 +28,7 @@ jobs:
 
   full-run:
     needs: check
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04  # same as check (see there)
     timeout-minutes: 20
     permissions:
       contents: write  # to commit r-packages-installed.csv back
@@ -33,6 +36,12 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.head_ref || github.ref_name }}  # the branch, not PR merge commit, so we can push
+      - name: "Runner info: Ubuntu release, any R before setup?"
+        run: |
+          . /etc/os-release; echo "$PRETTY_NAME ($VERSION_CODENAME), image ${ImageVersion:-?}"
+          command -v R Rscript || echo "no R/Rscript on PATH"
+          dpkg -l | grep -E '^ii +r-(base|cran)' || echo "no r-base*/r-cran-* debs"
+          ls -d /opt/R /usr/local/lib/R 2>/dev/null || echo "no /opt/R, /usr/local/lib/R"
       - name: Use the cloud env's apt mirror (archive.ubuntu.com), not the runner's
         # 2026-11-19: runner's us-east-2.ec2.archive.ubuntu.com crawled at ~50 KB/s,
         # setup timed out mid-download (92 of 232 debs). Cloud env uses archive.ubuntu.com,

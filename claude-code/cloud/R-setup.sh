@@ -131,6 +131,20 @@ EOF
 echo 'LANG=${LANG-C.UTF-8}' >> "$(R RHOME)/etc/Renviron.site"
 
 # ----------------------------------------------------------------------------
+# STEP 3b: Bring what's already installed up to CRAN, BEFORE adding new pkgs.
+#   Soft fail. (~3 s fresh)
+# WHY: install.packages() installs MISSING deps but never upgrades an old one,
+#   even when a new pkg needs a newer version (">= x.y") -> that pkg won't load.
+#   Fresh build: only R's bundled "recommended" pkgs (Matrix, MASS, cluster...)
+#   exist yet. They come from the r-recommended deb, which lags CRAN (apt can't
+#   give newer), so update them from CRAN. Re-running setup in an old
+#   container: also stale pkgs from last time (2026-11-23: shiny 1.14 stayed
+#   while CRAN shiny 1.15 had added a new dep, watcher).
+# ----------------------------------------------------------------------------
+step "3b: update.packages"
+Rscript -e 'update.packages(ask = FALSE, checkBuilt = TRUE)' || warn "update.packages failed"
+
+# ----------------------------------------------------------------------------
 # STEP 4a: Core R packages  (~1-1.5 min)
 # tidyverse already includes dplyr, dbplyr, tidyr, purrr, readr, haven (SAS
 # files), lubridate, stringr, forcats, ggplot2, DBI (via dbplyr), etc.
@@ -152,18 +166,6 @@ install.packages(pkgs)
 missing <- setdiff(pkgs, rownames(installed.packages()))
 if (length(missing)) { message("EXTRAS FAILED: ", paste(missing, collapse = ", ")); quit(status = 1) }
 ' "$CFG_DIR/r-packages.txt" || warn "extra R pkgs failed to install (EXTRAS FAILED above)"
-
-# ----------------------------------------------------------------------------
-# STEP 4b2: Upgrade anything already installed but older than CRAN. Soft fail.
-# WHY: install.packages() installs MISSING deps but never upgrades an old one,
-#   even when a new pkg needs a newer version (">= x.y") -> that pkg won't load.
-#   Fresh build: only R's bundled "recommended" pkgs (Matrix, MASS, cluster...,
-#   from the r-recommended deb, can lag CRAN), a few seconds. Re-running setup
-#   in an old container: also stale deps (2026-11-23: shiny 1.14 stayed while
-#   CRAN shiny 1.15 had added a new dep, watcher).
-# ----------------------------------------------------------------------------
-step "4b2: update.packages"
-Rscript -e 'update.packages(ask = FALSE, checkBuilt = TRUE)' || warn "update.packages failed"
 
 # ----------------------------------------------------------------------------
 # STEP 4c: duckdb CLI  (~5 s, 24 MB). Soft fail.
