@@ -197,6 +197,7 @@ case "$(uname -m)" in aarch64|arm64) DUCKDB_ARCH=arm64 ;; *) DUCKDB_ARCH=amd64 ;
 #   Tested 2026-11-22: dbDriver("Oracle") OK, connect -> ORA-12262 (expected).
 # WATCH OUT: noble renamed libaio.so.1 -> libaio.so.1t64, so symlink the old
 #   name. URL = Oracle's unpinned "latest" (no login), x64 only (ARM: -arm64).
+#   Needs unzip: on the cloud image + GH runner already, so not in apt list.
 # ----------------------------------------------------------------------------
 # step "4d: Oracle Instant Client"
 # OIC_ZIP="$(mktemp --suffix=.zip)"

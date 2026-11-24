@@ -17,10 +17,12 @@ on:
 
 jobs:
   check:
-    # = the cloud env's Ubuntu (noble). NOT ubuntu-latest: that moves to a new
-    # release on GitHub's schedule, not Anthropic's. When the cloud env moves,
-    # bump both runs-on + "noble" in check.sh.
-    runs-on: ubuntu-24.04
+    # ubuntu-latest: nothing to bump by hand; the scripts read the release from
+    # /etc/os-release. Trade-off: GitHub moves ubuntu-latest to a new Ubuntu on
+    # its schedule, Anthropic moves the cloud env on theirs, so for a while CI
+    # may test a different release than the cloud. "Release:" in full-run's log
+    # vs "Ubuntu codename:" in the cloud's /var/log/cc-setup.log shows it.
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - run: pip install codespell  # spell check, used by check.sh
@@ -28,7 +30,7 @@ jobs:
 
   full-run:
     needs: check
-    runs-on: ubuntu-24.04  # same as check (see there)
+    runs-on: ubuntu-latest  # same as check (see there)
     timeout-minutes: 20
     permissions:
       contents: write  # to commit r-packages-installed.csv back
@@ -36,12 +38,9 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.head_ref || github.ref_name }}  # the branch, not PR merge commit, so we can push
-      - name: "Runner info: Ubuntu release, any R before setup?"
-        run: |
-          . /etc/os-release; echo "$PRETTY_NAME ($VERSION_CODENAME), image ${ImageVersion:-?}"
-          command -v R Rscript || echo "no R/Rscript on PATH"
-          dpkg -l | grep -E '^ii +r-(base|cran)' || echo "no r-base*/r-cran-* debs"
-          ls -d /opt/R /usr/local/lib/R 2>/dev/null || echo "no /opt/R, /usr/local/lib/R"
+      - name: "Release: which Ubuntu is ubuntu-latest today?"
+        # (runner has no R before setup: checked 2026-11-24, image 20261116)
+        run: . /etc/os-release; echo "$PRETTY_NAME ($VERSION_CODENAME), image ${ImageVersion:-?}"
       - name: Use the cloud env's apt mirror (archive.ubuntu.com), not the runner's
         # 2026-11-19: runner's us-east-2.ec2.archive.ubuntu.com crawled at ~50 KB/s,
         # setup timed out mid-download (92 of 232 debs). Cloud env uses archive.ubuntu.com,

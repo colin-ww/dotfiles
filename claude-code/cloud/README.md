@@ -9,10 +9,10 @@
 | `user-claude.md` | becomes `~/.claude/CLAUDE.md` in every cloud session | Claude needs to know something about the env |
 | `R-setup.sh` | the code: reads the three files above | steps change (rare) |
 | `pkg-inventory.R` -> `r-packages-installed.csv` | every R pkg the setup installs: tidy-direct / oth-direct / both / indirect. Also loads each one (fails on a missing system lib). CI regenerates + commits it | never by hand: edit `r-packages.txt` |
-| `check.sh` | tests (bash syntax, shellcheck, apt/CRAN names exist) | - |
+| `check.sh` | tests, no R needed: bash syntax, shellcheck, apt/CRAN names exist, every system lib Posit says our R pkgs need is in `apt-packages.txt` (or on a `# skip:` line) | - |
 
 CI (`.github/workflows/cloud-setup.yml`) runs `check.sh`, then the whole
-`R-setup.sh` on an Ubuntu 24.04 runner with `STRICT=1` (any `WARN:` = red; in
+`R-setup.sh` on an `ubuntu-latest` runner with `STRICT=1` (any `WARN:` = red; in
 sessions they're soft so one flaky pkg doesn't cost you R), then loads every R pkg.
 Run the quick part locally (as root or with sudo): `bash claude-code/cloud/check.sh`.
 
