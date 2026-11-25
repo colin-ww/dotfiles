@@ -131,6 +131,20 @@ EOF
 echo 'LANG=${LANG-C.UTF-8}' >> "$(R RHOME)/etc/Renviron.site"
 
 # ----------------------------------------------------------------------------
+# STEP 3b: Bring what's already installed up to CRAN, BEFORE adding new pkgs.
+#   Soft fail. (~3 s fresh)
+# WHY: install.packages() installs MISSING deps but never upgrades an old one,
+#   even when a new pkg needs a newer version (">= x.y") -> that pkg won't load.
+#   Fresh build: only R's bundled "recommended" pkgs (Matrix, MASS, cluster...)
+#   exist yet. They come from the r-recommended deb, which lags CRAN (apt can't
+#   give newer), so update them from CRAN. Re-running setup in an old
+#   container: also stale pkgs from last time (2026-11-23: shiny 1.14 stayed
+#   while CRAN shiny 1.15 had added a new dep, watcher).
+# ----------------------------------------------------------------------------
+step "3b: update.packages"
+Rscript -e 'update.packages(ask = FALSE, checkBuilt = TRUE)' || warn "update.packages failed"
+
+# ----------------------------------------------------------------------------
 # STEP 4a: Core R packages  (~1-1.5 min)
 # tidyverse already includes dplyr, dbplyr, tidyr, purrr, readr, haven (SAS
 # files), lubridate, stringr, forcats, ggplot2, DBI (via dbplyr), etc.
@@ -183,6 +197,7 @@ case "$(uname -m)" in aarch64|arm64) DUCKDB_ARCH=arm64 ;; *) DUCKDB_ARCH=amd64 ;
 #   Tested 2026-11-22: dbDriver("Oracle") OK, connect -> ORA-12262 (expected).
 # WATCH OUT: noble renamed libaio.so.1 -> libaio.so.1t64, so symlink the old
 #   name. URL = Oracle's unpinned "latest" (no login), x64 only (ARM: -arm64).
+#   Needs unzip: on the cloud image + GH runner already, so not in apt list.
 # ----------------------------------------------------------------------------
 # step "4d: Oracle Instant Client"
 # OIC_ZIP="$(mktemp --suffix=.zip)"
@@ -196,6 +211,27 @@ case "$(uname -m)" in aarch64|arm64) DUCKDB_ARCH=arm64 ;; *) DUCKDB_ARCH=amd64 ;
 #   && echo "Oracle Instant Client OK ($OIC_DIR)"; } \
 #   || warn "Oracle Instant Client install failed"
 # rm -f "$OIC_ZIP"
+
+# ----------------------------------------------------------------------------
+# STEP 4e: quarto CLI  (~15 s, 141 MB .deb, 420 MB in /opt/quarto). Soft fail.
+# WHY: the quarto R pkg (r-packages.txt) is only a wrapper: quarto_render()
+#   and `quarto render` need the CLI. Not in apt: official .deb, latest stable
+#   per quarto.org's download manifest (the one its download page uses).
+#   Bundles its own pandoc, deno, typst, dart-sass. jq: apt-packages.txt.
+# Tested 2026-11-24: 1.11.9; a .qmd with an R chunk (dplyr) renders to html.
+# ----------------------------------------------------------------------------
+step "4e: quarto CLI"
+QUARTO_DEB="$(mktemp --suffix=.deb)"
+chmod 644 "$QUARTO_DEB"  # apt reads it as user _apt
+{ QUARTO_URL="$("${CURL[@]}" https://quarto.org/docs/download/_download.json \
+    | jq -r --arg a "$(dpkg --print-architecture)" \
+        '.assets[] | select(.name | endswith("linux-" + $a + ".deb")) | .download_url')" \
+  && [ -n "$QUARTO_URL" ] \
+  && "${CURL[@]}" -o "$QUARTO_DEB" "$QUARTO_URL" \
+  && apt-get install -y -q --no-install-recommends "${APT_NET[@]}" "$QUARTO_DEB" \
+  && echo "quarto CLI $(quarto --version) OK"; } \
+  || warn "quarto CLI install failed"
+rm -f "$QUARTO_DEB"
 
 # ----------------------------------------------------------------------------
 # STEP 5: Tell Claude what's set up  (instant)
