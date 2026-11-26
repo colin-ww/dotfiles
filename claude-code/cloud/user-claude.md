@@ -4,6 +4,7 @@
 - R (current, from CRAN's Ubuntu repo), tidyverse and ~170 extras (+ deps, ~530 pkgs) are preinstalled. Run R with `Rscript`.
 - `duckdb` CLI, same DuckDB version as the R duckdb package; both use `~/.duckdb`.
 - `quarto` CLI (latest stable) and `pandoc`: `quarto render x.qmd`, `quarto::quarto_render()`, `rmarkdown::render()` work.
+- `micromamba` (conda-forge client, same commands as the Zone's `mamba`), e.g. `micromamba create -y -p /tmp/env <pkg>` to check which `.so` a conda package ships. Not used for R: R pkgs come from PPM.
 - R runs in a UTF-8 locale (`LANG=C.UTF-8` in Renviron.site), so accents work.
 - CRAN is set to Posit Package Manager Linux binaries (Rprofile.site), so `install.packages()` takes seconds for anything missing.
 - Never reinstall R or packages that are already installed. Never build R from source.
