@@ -2,11 +2,11 @@
 
 for prefs/settings?
 
-or call it dosfiles-settinps?
+or call it dotfiles-settings?
 
-rstudio prefs.json
+rstudio-prefs.json
 
-.rprofile w coloured true false etc?
+.Rprofile w coloured true false etc?
 
 see Claude chat
 

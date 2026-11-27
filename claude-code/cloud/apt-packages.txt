@@ -1,0 +1,72 @@
+# System packages for R-setup.sh (one or more per line, "#" starts a comment).
+# Checked in CI (check.sh):
+#   - every name must exist in apt on the runner's Ubuntu release
+#   - every deb Posit Package Manager says our R pkgs (+ deps) need must be
+#     here: installed, or on a "# skip: <debs> -- why" line (bottom of file)
+# WATCH OUT: R pkg says "cannot open shared object libXYZ.so" -> a system lib
+#   is missing. Add its -dev package here (the -dev pulls in the runtime lib).
+
+# R itself (CRAN's repo, newer than Ubuntu's). r-base-dev = compilers/headers
+# so a pkg with no binary can still build from source.
+r-base r-base-dev
+
+# curl/ssl -> httr, curl     xml2 -> xml2, rvest     uv -> fs
+libcurl4-openssl-dev libssl-dev
+libxml2-dev
+libuv1-dev
+
+# ragg, textshaping (ggplot2 graphics)
+libfontconfig1-dev
+libharfbuzz-dev
+libfribidi-dev
+libfreetype-dev     # NOT libfreetype6-dev: virtual pkg on noble
+libpng-dev libtiff-dev libjpeg-dev   # libtiff5-dev was jammy, noble is libtiff-dev
+
+# igraph (-> targets, crew). Depends on libglpk40 (libglpk.so.40), so no need
+# to list it. NOT "libglpk40-dev": doesn't exist, broke setup on 2026-11-13.
+libglpk-dev
+
+# odbc (libodbc.so.2; sc-nts-frame box::use()s odbc)
+unixodbc-dev
+
+# gert = git from R (usethis use_git()/pr_*(), pkgdown). Needs libgit2.so.1.7.
+# Found 2026-11-15 by pkg-inventory.R loading every pkg: gert didn't load.
+libgit2-dev
+
+# dev tools for editing the repos (check.sh uses both; apt versions are fine)
+codespell shellcheck
+jq   # check.sh (sysreqs API) + R-setup.sh step 4e (quarto manifest). On both images anyway
+
+# magick (-> summarytools, datacleanr)
+libmagick++-dev
+
+# units
+libudunits2-dev
+
+# sf: needed by gganimate (-> transformr), tidycensus (-> tigris), cancensus.
+# All 3 commented out in r-packages.txt, so these are too.
+# ~83 apt pkgs / 54 MB, ~10 s.
+# libgdal-dev libgeos-dev libproj-dev
+
+# pdftools (libpoppler-cpp.so.0). Found 2026-11-23 by pkg-inventory.R. 2 debs.
+libpoppler-cpp-dev
+
+# ROracle: Oracle Instant Client needs libaio (noble renamed it libaio1t64).
+# NOTE: ROracle loads without Instant Client, but dbDriver("Oracle") needs
+# libclntsh.so from Instant Client (R-setup.sh step 4d, commented out).
+# Uncomment together with step 4d.
+# libaio1t64
+
+# pandoc: rmarkdown, knitr, bookdown, pagedown, reprex render with it (pkgs
+# load fine without it, so the load test can't catch it missing). Already on
+# the cloud image (2026-11-24); listed so it can't silently vanish.
+# The quarto R pkg needs the separate quarto CLI: not in apt, R-setup.sh step 4e.
+pandoc
+
+# --- Skipped on purpose. check.sh (Posit sysreqs) says some R pkg wants these.
+# Format: "# skip: <debs> -- why". check.sh reads these lines; apt doesn't.
+# skip: cmake make zlib1g-dev libicu-dev libzstd-dev libx11-dev libwebp-dev libssh2-1-dev -- only to BUILD from source; Posit binaries need just the runtime libs, already on the image (CI's load test proves it). r-base-dev brings make anyway.
+# skip: libfreetype6-dev -- virtual pkg on noble; libfreetype-dev (above) is the real one
+# skip: git python3 -- on both images already. python3: cloud has its own in /usr/local/bin
+# skip: libnode-dev -- V8: Posit's binary bundles its own engine, loads without it
+# skip: gsfonts poppler-data libimage-exiftool-perl -- optional extras: fonts for magick, data for pdftools, exiftool for xmpdf

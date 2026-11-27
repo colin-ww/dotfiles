@@ -2,8 +2,15 @@
 
 # see: https://claude.ai/chat/1540efcf-491e-4344-b536-f47f11156400
 
+# SOURCE OF TRUTH: this file + apt-packages.txt, r-packages.txt, user-claude.md
+# (same folder). The cloud env's "Setup script" field only
+# downloads + runs it (bootstrap in README.md). After editing this file and
+# merging to main, bump the version date in the env's field: the env cache
+# only rebuilds when that field's text changes (or after ~7 days).
+
 # time takes to run:
 #   2026.10.16: 0m47 - first draft
+#   2026.11.07: 0m42 - 31 extras (live env log)
 
 # ============================================================================
 # Claude Code cloud env: R + tidyverse-style stack
@@ -23,7 +30,11 @@
 # FAILURE POLICY:
 #   - Core (R itself, tidyverse): fail loudly with exit 1. The session won't
 #     start, so you notice, and a broken setup doesn't get cached for 7 days.
-#   - Extras: soft fail, logged, the session still starts.
+#   - Extras: soft fail, logged as "WARN:", the session still starts. A
+#     failed setup = a session with NO R at all, so one flaky extra pkg
+#     shouldn't cost you everything.
+#   - STRICT=1 (CI sets it): any WARN makes the script exit 1 at the end, so
+#     problems turn CI red before they reach main. Soft in sessions, strict in CI.
 #
 # LOG: everything goes to /var/log/cc-setup.log. Ask Claude to read it if
 # something seems off.
@@ -34,11 +45,36 @@ echo "=== setup start: $(date) ==="
 
 export DEBIAN_FRONTEND=noninteractive  # stop apt from asking questions
 
+# Downloads retry + time out instead of hanging silently. 2026-11-17: CI sat
+# 4 min with zero output right after "Config dir" (curl/apt have no timeout by
+# default, apt -qq prints nothing while downloading) and got killed.
+CURL=(curl -fsSL --retry 3 --connect-timeout 20 --max-time 300)
+APT_NET=(-o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
+# Elapsed time per step, so a slow/stuck step shows in the log.
+step() { echo "--- $* (${SECONDS}s)"; }
+
 # Ubuntu codename (docs say 24.04 = "noble"). Read it rather than hardcode,
 # so this keeps working if Anthropic upgrades the base image.
 . /etc/os-release
 CODENAME="${VERSION_CODENAME:-noble}"
 echo "Ubuntu codename: $CODENAME"
+
+# Config (pkg lists + CLAUDE.md) lives in separate files next to this script.
+# CFG_DIR set (CI, local test) = use that dir. Else download from main.
+CFG_BASE="https://raw.githubusercontent.com/colin-ww/dotfiles/main/claude-code/cloud"
+CFG_FILES="apt-packages.txt r-packages.txt user-claude.md"
+if [ -z "${CFG_DIR:-}" ]; then
+  CFG_DIR="$(mktemp -d)"
+  for f in $CFG_FILES; do
+    "${CURL[@]}" "$CFG_BASE/$f" -o "$CFG_DIR/$f" || { echo "FAIL: download $f"; exit 1; }
+  done
+fi
+echo "Config dir: $CFG_DIR"
+# One word per line, "#" comments stripped.
+words() { sed 's/#.*//' "$1" | tr -s ' \t' '\n' | grep . || true; }
+# Soft failure: log it, count it (STRICT=1 turns any into exit 1 at the end).
+SOFT_FAILS=0
+warn() { echo "WARN: $*"; SOFT_FAILS=$((SOFT_FAILS + 1)); }
 
 # ----------------------------------------------------------------------------
 # STEP 1: Add CRAN's own Ubuntu repo  (~5 s)
@@ -48,29 +84,22 @@ echo "Ubuntu codename: $CODENAME"
 # WATCH OUT: don't apt-install Ubuntu's r-cran-* packages alongside this.
 #      They're built for Ubuntu's older R and can clash with Posit packages.
 # ----------------------------------------------------------------------------
-curl -fsSL https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc \
+step "1: CRAN apt repo"
+"${CURL[@]}" https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc \
   > /etc/apt/trusted.gpg.d/cran_ubuntu_key.asc || { echo "FAIL: CRAN key"; exit 1; }
 echo "deb https://cloud.r-project.org/bin/linux/ubuntu ${CODENAME}-cran40/" \
   > /etc/apt/sources.list.d/cran-r.list
 
 # ----------------------------------------------------------------------------
 # STEP 2: Install R + system libraries  (~1-1.5 min)
-# r-base      = R plus "recommended" pkgs (Matrix, MASS, survival, ...)
-# r-base-dev  = compilers/headers, so a package with no binary can still
-#               build from source as a fallback
-# lib*-dev    = system libraries tidyverse-type packages link to at runtime:
-#   curl/ssl -> httr, curl     xml2 -> xml2, rvest     uv -> fs
-#   fontconfig/harfbuzz/fribidi/freetype/png/tiff/jpeg -> ragg, textshaping
-#   (ggplot2 graphics)
+# Package list + why each system lib is there: apt-packages.txt
 # WATCH OUT: if a package later says "cannot open shared object libXYZ.so",
-#   a system lib is missing. Add its -dev package to this list.
+#   a system lib is missing. Add its -dev package to apt-packages.txt.
 # ----------------------------------------------------------------------------
-apt-get update -qq || { echo "FAIL: apt update"; exit 1; }
-apt-get install -y -qq --no-install-recommends \
-  r-base r-base-dev \
-  libcurl4-openssl-dev libssl-dev libxml2-dev libuv1-dev \
-  libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
-  libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev \
+step "2: apt update + install"
+apt-get update -q "${APT_NET[@]}" || { echo "FAIL: apt update"; exit 1; }
+mapfile -t APT_PKGS < <(words "$CFG_DIR/apt-packages.txt")
+apt-get install -y -q --no-install-recommends "${APT_NET[@]}" "${APT_PKGS[@]}" \
   || { echo "FAIL: R install"; exit 1; }
 
 # ----------------------------------------------------------------------------
@@ -95,6 +124,25 @@ options(
   timeout = 600
 )
 EOF
+# UTF-8: the VM has no LANG, so R ran in the "C" locale: nchar("é") = 2,
+#   toupper("é") = "é", regex "." doesn't match é, prints "Qu\303\251bec".
+#   Bad for French data. C.UTF-8 is built into Ubuntu (no locales pkg needed).
+#   ${LANG-...} = only if LANG isn't already set (R expands it, not bash).
+echo 'LANG=${LANG-C.UTF-8}' >> "$(R RHOME)/etc/Renviron.site"
+
+# ----------------------------------------------------------------------------
+# STEP 3b: Bring what's already installed up to CRAN, BEFORE adding new pkgs.
+#   Soft fail. (~3 s fresh)
+# WHY: install.packages() installs MISSING deps but never upgrades an old one,
+#   even when a new pkg needs a newer version (">= x.y") -> that pkg won't load.
+#   Fresh build: only R's bundled "recommended" pkgs (Matrix, MASS, cluster...)
+#   exist yet. They come from the r-recommended deb, which lags CRAN (apt can't
+#   give newer), so update them from CRAN. Re-running setup in an old
+#   container: also stale pkgs from last time (2026-11-23: shiny 1.14 stayed
+#   while CRAN shiny 1.15 had added a new dep, watcher).
+# ----------------------------------------------------------------------------
+step "3b: update.packages"
+Rscript -e 'update.packages(ask = FALSE, checkBuilt = TRUE)' || warn "update.packages failed"
 
 # ----------------------------------------------------------------------------
 # STEP 4a: Core R packages  (~1-1.5 min)
@@ -102,30 +150,104 @@ EOF
 # files), lubridate, stringr, forcats, ggplot2, DBI (via dbplyr), etc.
 # Hard requirement: if it fails, stop.
 # ----------------------------------------------------------------------------
+step "4a: tidyverse"
 Rscript -e 'install.packages("tidyverse")' || { echo "FAIL: tidyverse"; exit 1; }
 
 # ----------------------------------------------------------------------------
 # STEP 4b: Extra R packages  (~0.5-1 min). EDIT FREELY.
 # Soft fail: a failure is logged but the session still starts.
 # Biggest downloads: arrow, duckdb. Drop them if runtime creeps toward 5 min.
-# NOT useful here: odbc/ROracle. The cloud VM can't reach StatCan DBs anyway.
+# List + notes on what is covered/left out: r-packages.txt
 # ----------------------------------------------------------------------------
+step "4b: extra R pkgs"
 Rscript -e '
-pkgs <- c(
-  "janitor",     # clean_names, tabyl
-  "testthat",    # unit tests
-  "styler",      # auto-format code
-  "lintr",       # lint / style checks
-  "arrow",       # parquet
-  "duckdb",      # fast local SQL on files
-  "data.table",  # fast fread/fwrite
-  "targets",     # pipelines
-  "here"         # project-relative paths
-)
+pkgs <- scan(commandArgs(TRUE)[1], what = "", comment.char = "#", quiet = TRUE)
 install.packages(pkgs)
 missing <- setdiff(pkgs, rownames(installed.packages()))
-if (length(missing)) message("EXTRAS FAILED: ", paste(missing, collapse = ", "))
-' || echo "WARN: extras step errored (see above)"
+if (length(missing)) { message("EXTRAS FAILED: ", paste(missing, collapse = ", ")); quit(status = 1) }
+' "$CFG_DIR/r-packages.txt" || warn "extra R pkgs failed to install (EXTRAS FAILED above)"
+
+# ----------------------------------------------------------------------------
+# STEP 4c: duckdb CLI  (~5 s, 24 MB). Soft fail.
+# Same DuckDB version as the engine inside the R duckdb pkg, so a .duckdb file
+# written by one opens in the other. Not in Ubuntu's apt: official download
+# (same URL as DuckDB's install script; v2+ ships a .tar.gz, v1 was .gz).
+# ~/.duckdb: R duckdb 2.x otherwise keeps extensions in a temp dir (re-downloaded
+#   every session) and prints a notice on every connect. With it, R and the
+#   CLI share one home (same version -> same extensions).
+# ----------------------------------------------------------------------------
+step "4c: duckdb CLI"
+mkdir -p ~/.duckdb
+DUCKDB_V="$(Rscript -e 'con <- DBI::dbConnect(duckdb::duckdb()); cat(DBI::dbGetQuery(con, "select version() v")$v); DBI::dbDisconnect(con)' 2>/dev/null)"
+case "$(uname -m)" in aarch64|arm64) DUCKDB_ARCH=arm64 ;; *) DUCKDB_ARCH=amd64 ;; esac
+{ [ -n "$DUCKDB_V" ] \
+  && "${CURL[@]}" "https://install.duckdb.org/${DUCKDB_V}/duckdb-cli-linux-${DUCKDB_ARCH}.tar.gz" \
+     | tar -xzf - -C /usr/local/bin duckdb \
+  && [ "$(duckdb --version | grep -oE '^v[0-9.]+')" = "$DUCKDB_V" ] \
+  && echo "duckdb CLI $DUCKDB_V OK"; } \
+  || warn "duckdb CLI install failed (wanted ${DUCKDB_V:-?}, same as R duckdb engine)"
+
+# ----------------------------------------------------------------------------
+# STEP 4d: Oracle Instant Client (Basic Lite)  (~8 s, 76 MB download, 171 MB
+# on disk). Soft fail. OFF for now: uncomment the block below AND libaio1t64
+# in apt-packages.txt to turn it on.
+# WHY: ROracle loads without it, but dbDriver("Oracle")/dbConnect() need
+#   libclntsh.so. StatCan DBs aren't reachable from here either way; with it,
+#   ROracle code fails at connect (ORA-12262), not at driver load.
+#   Tested 2026-11-22: dbDriver("Oracle") OK, connect -> ORA-12262 (expected).
+# WATCH OUT: noble renamed libaio.so.1 -> libaio.so.1t64, so symlink the old
+#   name. URL = Oracle's unpinned "latest" (no login), x64 only (ARM: -arm64).
+#   Needs unzip: on the cloud image + GH runner already, so not in apt list.
+# ----------------------------------------------------------------------------
+# step "4d: Oracle Instant Client"
+# OIC_ZIP="$(mktemp --suffix=.zip)"
+# { "${CURL[@]}" -o "$OIC_ZIP" \
+#     https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip \
+#   && mkdir -p /opt/oracle && unzip -qo "$OIC_ZIP" -d /opt/oracle \
+#   && OIC_DIR="$(ls -d /opt/oracle/instantclient_* | sort -V | tail -1)" \
+#   && ln -sf /usr/lib/x86_64-linux-gnu/libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1 \
+#   && echo "$OIC_DIR" > /etc/ld.so.conf.d/oracle-instantclient.conf && ldconfig \
+#   && Rscript -e 'invisible(ROracle::Oracle())' \
+#   && echo "Oracle Instant Client OK ($OIC_DIR)"; } \
+#   || warn "Oracle Instant Client install failed"
+# rm -f "$OIC_ZIP"
+
+# ----------------------------------------------------------------------------
+# STEP 4e: quarto CLI  (~15 s, 141 MB .deb, 420 MB in /opt/quarto). Soft fail.
+# WHY: the quarto R pkg (r-packages.txt) is only a wrapper: quarto_render()
+#   and `quarto render` need the CLI. Not in apt: official .deb, latest stable
+#   per quarto.org's download manifest (the one its download page uses).
+#   Bundles its own pandoc, deno, typst, dart-sass. jq: apt-packages.txt.
+# Tested 2026-11-24: 1.11.9; a .qmd with an R chunk (dplyr) renders to html.
+# ----------------------------------------------------------------------------
+step "4e: quarto CLI"
+QUARTO_DEB="$(mktemp --suffix=.deb)"
+chmod 644 "$QUARTO_DEB"  # apt reads it as user _apt
+{ QUARTO_URL="$("${CURL[@]}" https://quarto.org/docs/download/_download.json \
+    | jq -r --arg a "$(dpkg --print-architecture)" \
+        '.assets[] | select(.name | endswith("linux-" + $a + ".deb")) | .download_url')" \
+  && [ -n "$QUARTO_URL" ] \
+  && "${CURL[@]}" -o "$QUARTO_DEB" "$QUARTO_URL" \
+  && apt-get install -y -q --no-install-recommends "${APT_NET[@]}" "$QUARTO_DEB" \
+  && echo "quarto CLI $(quarto --version) OK"; } \
+  || warn "quarto CLI install failed"
+rm -f "$QUARTO_DEB"
+
+# ----------------------------------------------------------------------------
+# STEP 4f: micromamba  (~3 s, 19 MB). Soft fail.
+# WHY: a conda-forge client, same commands as the Zone's `mamba`. Used to check
+#   what a conda package really ships (e.g. which .so version), or to try a
+#   conda-only tool. Not used by R here: R and its pkgs stay on CRAN/PPM.
+#   Single static binary (no shell init needed); conda-forge set as the only channel.
+# ----------------------------------------------------------------------------
+step "4f: micromamba"
+case "$(uname -m)" in aarch64|arm64) MM_ARCH=linux-aarch64 ;; *) MM_ARCH=linux-64 ;; esac
+{ "${CURL[@]}" -o /usr/local/bin/micromamba \
+    "https://github.com/mamba-org/micromamba-releases/releases/latest/download/micromamba-${MM_ARCH}" \
+  && chmod 755 /usr/local/bin/micromamba \
+  && printf 'channels:\n  - conda-forge\nchannel_priority: strict\n' > ~/.mambarc \
+  && echo "micromamba $(micromamba --version) OK"; } \
+  || warn "micromamba install failed"
 
 # ----------------------------------------------------------------------------
 # STEP 5: Tell Claude what's set up  (instant)
@@ -133,14 +255,7 @@ if (length(missing)) message("EXTRAS FAILED: ", paste(missing, collapse = ", "))
 # session, whatever repo. Stops Claude reinstalling R or compiling things.
 # It combines with any repo CLAUDE.md, it doesn't replace it.
 # ----------------------------------------------------------------------------
-mkdir -p ~/.claude
-cat > ~/.claude/CLAUDE.md <<'EOF'
-# Environment notes (written by the cloud setup script)
-- R (current, from CRAN's Ubuntu repo) and tidyverse + common packages are preinstalled. Run R with Rscript.
-- CRAN is set to Posit Package Manager Linux binaries, so install.packages() is fast for anything missing.
-- Never reinstall R or packages that are already installed. Never build R from source.
-- If R or packages seem broken, read /var/log/cc-setup.log before trying fixes.
-EOF
+install -D -m 644 "$CFG_DIR/user-claude.md" ~/.claude/CLAUDE.md
 
 # ----------------------------------------------------------------------------
 # STEP 6: Self-check  (~5 s)
@@ -148,6 +263,13 @@ EOF
 # ----------------------------------------------------------------------------
 Rscript -e 'suppressMessages(library(tidyverse)); cat("R", as.character(getRversion()), "OK\n")' \
   || { echo "FAIL: self-check"; exit 1; }
+Rscript -e 'x <- "Québec"; stopifnot(l10n_info()[["UTF-8"]], nchar(x) == 6, toupper(x) == "QUÉBEC")' \
+  || warn "R isn't in a UTF-8 locale (accents break)"
 
-echo "=== setup done: $(date) ==="
+echo "=== setup done: $(date), took ${SECONDS}s, $SOFT_FAILS warning(s) ==="
+# Snapshot is only cached if the whole script finishes in ~5 min.
+[ "$SECONDS" -le 240 ] || warn "setup took over 4 min, close to the ~5 min cache limit"
+if [ "${STRICT:-0}" = 1 ] && [ "$SOFT_FAILS" -gt 0 ]; then
+  echo "STRICT: $SOFT_FAILS warning(s) -> exit 1"; exit 1
+fi
 exit 0

@@ -1,0 +1,196 @@
+# R packages for R-setup.sh, installed after tidyverse (which is hard-coded).
+
+# Whitespace-separated, "#" starts a comment. Soft fail: a failed pkg is
+# logged, the session still starts. Checked in CI (check.sh): each name must
+# be on CRAN (Posit Package Manager).
+
+# Biggest downloads: arrow, duckdb. Drop them if runtime creeps toward 5 min.
+# Covers sc-nts-frame + rr-tests, all branches (2026.11.07; re-check with
+#   Rscript claude-code/cloud/scan-repo-deps.R <repo dirs>).
+#   Can't: zonetools, RDCI (internal GitLab). Left out on purpose ("trying a
+#   pkg", not tests): polars, tidypolars.
+# odbc, ROracle: the cloud VM can't reach StatCan DBs, but code loads them, so
+#   they must install. ROracle = PPM binary, loads fine; connecting would also
+#   need Oracle Instant Client (see apt-packages.txt).
+
+## soon, non CRAN:
+# polars, tidypolars
+# covrpage testdown
+# lozen
+# devindocker
+# emo
+# tidyverse/ggbot2
+# colin-ww/banff
+# surveyanalysis (once on cran)
+
+tidylog    # print out what dplyr fcts did, SAS-style, esp useful for joins? eg tidylog::left_join()
+
+# TIDYMODELS - broom recipes parsnip workflows yardstick rsample infer ...
+tidymodels
+
+# EASYSTATS
+easystats
+
+# dev
+devtools fusen rcmdcheck checkhelper
+covr testthat
+usethis here rprojroot ProjectTemplate 
+git2r gh gitlabr gitdown
+lintr styler
+spelling   # hunspell: spelling::spell_check_files("README.md")
+fcuk
+remedy
+
+# timing / memory
+bench tictoc microbenchmark
+lobstr memuse
+
+# pkgs
+pacman pak remotes 
+renv
+attachment  # DESCRIPTION file, etc?
+box
+
+# check
+pointblank assertthat checkmate
+
+# IO
+arrow duckdb nanoarrow nanoparquet
+qs2 feather
+rio fastreg zoo
+RSQLite odbc ROracle RODBC
+openxlsx2 writexl
+pdftools
+
+# clean data
+datacleanr datawizard gdata naniar
+simputation
+codebook
+labelled
+mosaicCore
+
+# speed / parallel
+dtplyr duckplyr multidplyr
+data.table collapse kit
+fstcore tidyfst
+futurize furrr
+parallelly progressr
+
+# workflow
+config
+targets crew
+tarchetypes sqltargets gittargets
+workflows workflowsets
+
+# syntax / lists
+zeallot wrapr arpr
+rlist listr
+poorman
+
+# files / processes
+fs ps
+
+# compare / desc
+waldo skimr
+datadiff vdiffr
+
+# render
+quarto kableExtra
+pagedown bookdown
+lightparser
+
+# table
+janitor
+tabxplor arsenal
+summarytools tableone
+gt gtsummary
+broom broom.helpers jstable
+formattable
+flextable
+tinytable
+rtables
+sortable
+tidytable
+sjtable2df
+
+# plot
+#gganimate - lots deps/sys libs
+ggformula ggrepel
+ggx egg
+cowplot
+plotly
+ggplotify
+ggfortify
+wsjplot
+sjPlot
+
+# survey
+survey srvyr questionr
+# Both need sf -> GDAL/GEOS/PROJ sys libs (commented out in apt-packages.txt).
+# tidycensus = US Census Bureau; cancensus = StatCan census (CensusMapper API).
+# tidycensus
+# cancensus
+
+# epi
+epitools epitab Hmisc
+
+# wrangle
+reshape2 listenv plyr
+
+# misc
+reticulate gseries
+RCurl
+ellmer
+rex
+
+
+JWileymisc
+
+
+languageserver
+
+hablar
+
+thinkr
+
+NMdata
+
+zstd
+sloop
+mockery
+
+units
+
+slider
+
+hardhat
+
+sqldf
+goodpractice
+
+quanteda
+
+lazyeval
+
+tidypredict
+
+cmdfun
+argparse
+arg
+argparser
+optparse
+getopt
+
+logger
+futile.logger
+lgr
+log4r
+logging
+
+gtools
+
+diffobj
+
+useful
+
+

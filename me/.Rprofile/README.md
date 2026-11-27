@@ -31,6 +31,21 @@ Code blocks below need **R >= 4.2** (native pipe `_` placeholder).
 <br>
 
 
+#### Background
+
+code in .rprofile runs anytime you start r or run r (rstudio/terminal/rscript)
+
+wd? not per project?
+
+other things should know?
+
+if errors?
+
+therefore wrap chunks in trycatch?!? not unless complex?
+
+<br>
+
+
 #### What to think about
 (ie what should go in .Rprofile and what should stay far away)
 
