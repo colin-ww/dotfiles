@@ -234,6 +234,22 @@ chmod 644 "$QUARTO_DEB"  # apt reads it as user _apt
 rm -f "$QUARTO_DEB"
 
 # ----------------------------------------------------------------------------
+# STEP 4f: micromamba  (~3 s, 19 MB). Soft fail.
+# WHY: a conda-forge client, same commands as the Zone's `mamba`. Used to check
+#   what a conda package really ships (e.g. which .so version), or to try a
+#   conda-only tool. Not used by R here: R and its pkgs stay on CRAN/PPM.
+#   Single static binary (no shell init needed); conda-forge set as the only channel.
+# ----------------------------------------------------------------------------
+step "4f: micromamba"
+case "$(uname -m)" in aarch64|arm64) MM_ARCH=linux-aarch64 ;; *) MM_ARCH=linux-64 ;; esac
+{ "${CURL[@]}" -o /usr/local/bin/micromamba \
+    "https://github.com/mamba-org/micromamba-releases/releases/latest/download/micromamba-${MM_ARCH}" \
+  && chmod 755 /usr/local/bin/micromamba \
+  && printf 'channels:\n  - conda-forge\nchannel_priority: strict\n' > ~/.mambarc \
+  && echo "micromamba $(micromamba --version) OK"; } \
+  || warn "micromamba install failed"
+
+# ----------------------------------------------------------------------------
 # STEP 5: Tell Claude what's set up  (instant)
 # ~/.claude/CLAUDE.md is loaded as personal instructions in EVERY cloud
 # session, whatever repo. Stops Claude reinstalling R or compiling things.
